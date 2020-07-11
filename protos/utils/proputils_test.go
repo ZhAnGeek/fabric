@@ -8,7 +8,6 @@ package utils_test
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -20,11 +19,12 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/platforms/golang"
 	"github.com/hyperledger/fabric/msp"
 	mspmgmt "github.com/hyperledger/fabric/msp/mgmt"
-	"github.com/hyperledger/fabric/msp/mgmt/testtools"
+	msptesttools "github.com/hyperledger/fabric/msp/mgmt/testtools"
 	"github.com/hyperledger/fabric/protos/common"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm3"
 )
 
 func createCIS() *pb.ChaincodeInvocationSpec {
@@ -225,7 +225,7 @@ func TestCDSProposals(t *testing.T) {
 }
 
 func TestComputeProposalBinding(t *testing.T) {
-	expectedDigestHex := "5093dd4f4277e964da8f4afbde0a9674d17f2a6a5961f0670fc21ae9b67f2983"
+	expectedDigestHex := "46ecd84f90218f08eb25fb34a207f0dce8d348f35dffb36f059a631cfc5caea9"
 	expectedDigest, _ := hex.DecodeString(expectedDigestHex)
 	chdr, _ := proto.Marshal(&common.ChannelHeader{
 		Epoch: uint64(10),
@@ -622,8 +622,8 @@ func TestComputeProposalTxID(t *testing.T) {
 	assert.NoError(t, err, "Failed computing TxID")
 
 	// Compute the function computed by ComputeTxID,
-	// namely, base64(sha256(nonce||creator))
-	hf := sha256.New()
+	// namely, base64(sm3(nonce||creator))
+	hf := sm3.New()
 	hf.Write([]byte{1})
 	hf.Write([]byte{1})
 	hashOut := hf.Sum(nil)

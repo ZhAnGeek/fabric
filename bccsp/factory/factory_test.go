@@ -29,7 +29,7 @@ import (
 func TestMain(m *testing.M) {
 	var jsonBCCSP, yamlBCCSP *FactoryOpts
 	jsonCFG := []byte(
-		`{ "default": "SW", "SW":{ "security": 384, "hash": "SHA3" } }`)
+		`{ "default": "GM", "GM":{ "security": 256, "hash": "SM3" } }`)
 
 	err := json.Unmarshal(jsonCFG, &jsonBCCSP)
 	if err != nil {
@@ -39,9 +39,9 @@ func TestMain(m *testing.M) {
 
 	yamlCFG := `
 BCCSP:
-    default: SW
-    SW:
-        Hash: SHA3
+    default: GM
+    GM:
+        Hash: SM3
         Security: 256`
 
 	if pkcs11Enabled {
@@ -49,8 +49,8 @@ BCCSP:
 		yamlCFG = fmt.Sprintf(`
 BCCSP:
     default: PKCS11
-    SW:
-        Hash: SHA3
+    GM:
+        Hash: SM3
         Security: 256
     PKCS11:
         Hash: SHA3
@@ -77,8 +77,8 @@ BCCSP:
 
 	cfgVariations := []*FactoryOpts{
 		{},
-		{ProviderName: "SW"},
-		{ProviderName: "SW", SwOpts: &SwOpts{HashFamily: "SHA2", SecLevel: 256, Ephemeral: true}},
+		{ProviderName: "GM"},
+		{ProviderName: "GM", SwOpts: &SwOpts{HashFamily: "GM3", SecLevel: 256, Ephemeral: true}},
 		jsonBCCSP,
 		yamlBCCSP,
 	}

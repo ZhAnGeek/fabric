@@ -22,10 +22,7 @@ limitations under the License.
 package main
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"flag"
@@ -34,6 +31,8 @@ import (
 	"net"
 	"os"
 	"time"
+
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 //command line flags
@@ -54,36 +53,36 @@ func subjectTemplate() pkix.Name {
 }
 
 //default template for X509 certificates
-func x509Template() (x509.Certificate, error) {
+func x509Template() (sm2.Certificate, error) {
 
 	//generate a serial number
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
-		return x509.Certificate{}, err
+		return sm2.Certificate{}, err
 	}
 
 	now := time.Now()
 	//basic template to use
-	x509 := x509.Certificate{
+	x509 := sm2.Certificate{
 		SerialNumber:          serialNumber,
 		NotBefore:             now,
 		NotAfter:              now.Add(3650 * 24 * time.Hour), //~ten years
-		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		KeyUsage:              sm2.KeyUsageKeyEncipherment | sm2.KeyUsageDigitalSignature,
 		BasicConstraintsValid: true,
 	}
 	return x509, nil
 
 }
 
-//generate an EC private key (P256 curve)
-func genKeyECDSA(name string) (*ecdsa.PrivateKey, error) {
-	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+//generate an SM2 private key
+func genKeySM2(name string) (*sm2.PrivateKey, error) {
+	priv, err := sm2.GenerateKey()
 	if err != nil {
 		return nil, err
 	}
 	//write key out to file
-	keyBytes, err := x509.MarshalECPrivateKey(priv)
+	keyBytes, err := sm2.MarshalSm2PrivateKey(priv, nil)
 	keyFile, err := os.OpenFile(name+"-key.pem", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return nil, err
@@ -93,12 +92,12 @@ func genKeyECDSA(name string) (*ecdsa.PrivateKey, error) {
 	return priv, nil
 }
 
-//generate a signed X509 certficate using ECDSA
-func genCertificateECDSA(name string, template, parent *x509.Certificate, pub *ecdsa.PublicKey,
-	priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
+//generate a signed X509 certficate using SM2
+func genCertificateSM2(name string, template, parent *sm2.Certificate, pub *sm2.PublicKey,
+	priv *sm2.PrivateKey) (*sm2.Certificate, error) {
 
 	//create the x509 public cert
-	certBytes, err := x509.CreateCertificate(rand.Reader, template, parent, pub, priv)
+	certBytes, err := sm2.CreateCertificate(rand.Reader, template, parent, pub, priv)
 	if err != nil {
 		return nil, err
 	}
@@ -112,25 +111,25 @@ func genCertificateECDSA(name string, template, parent *x509.Certificate, pub *e
 	pem.Encode(certFile, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes})
 	certFile.Close()
 
-	x509Cert, err := x509.ParseCertificate(certBytes)
+	x509Cert, err := sm2.ParseCertificate(certBytes)
 	if err != nil {
 		return nil, err
 	}
 	return x509Cert, nil
 }
 
-//generate an EC certificate appropriate for use by a TLS server
-func genServerCertificateECDSA(name string, signKey *ecdsa.PrivateKey, signCert *x509.Certificate) error {
+//generate an SM2 certificate appropriate for use by a TLS server
+func genServerCertificateSM2(name string, signKey *sm2.PrivateKey, signCert *sm2.Certificate) error {
 	fmt.Println(name)
-	key, err := genKeyECDSA(name)
+	key, err := genKeySM2(name)
 	template, err := x509Template()
 
 	if err != nil {
 		return err
 	}
 
-	template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth,
-		x509.ExtKeyUsageClientAuth}
+	template.ExtKeyUsage = []sm2.ExtKeyUsage{sm2.ExtKeyUsageServerAuth,
+		sm2.ExtKeyUsageClientAuth}
 
 	//set the organization for the subject
 	subject := subjectTemplate()
@@ -141,7 +140,7 @@ func genServerCertificateECDSA(name string, signKey *ecdsa.PrivateKey, signCert 
 	template.DNSNames = []string{"localhost"}
 	template.IPAddresses = []net.IP{net.ParseIP("127.0.0.1")}
 
-	_, err = genCertificateECDSA(name, &template, signCert, &key.PublicKey, signKey)
+	_, err = genCertificateSM2(name, &template, signCert, &key.PublicKey, signKey)
 
 	if err != nil {
 		return err
@@ -150,17 +149,17 @@ func genServerCertificateECDSA(name string, signKey *ecdsa.PrivateKey, signCert 
 	return nil
 }
 
-//generate an EC certificate appropriate for use by a TLS server
-func genClientCertificateECDSA(name string, signKey *ecdsa.PrivateKey, signCert *x509.Certificate) error {
+//generate an SM2 certificate appropriate for use by a TLS server
+func genClientCertificateSM2(name string, signKey *sm2.PrivateKey, signCert *sm2.Certificate) error {
 	fmt.Println(name)
-	key, err := genKeyECDSA(name)
+	key, err := genKeySM2(name)
 	template, err := x509Template()
 
 	if err != nil {
 		return err
 	}
 
-	template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}
+	template.ExtKeyUsage = []sm2.ExtKeyUsage{sm2.ExtKeyUsageClientAuth}
 
 	//set the organization for the subject
 	subject := subjectTemplate()
@@ -169,7 +168,7 @@ func genClientCertificateECDSA(name string, signKey *ecdsa.PrivateKey, signCert 
 
 	template.Subject = subject
 
-	_, err = genCertificateECDSA(name, &template, signCert, &key.PublicKey, signKey)
+	_, err = genCertificateSM2(name, &template, signCert, &key.PublicKey, signKey)
 
 	if err != nil {
 		return err
@@ -178,11 +177,11 @@ func genClientCertificateECDSA(name string, signKey *ecdsa.PrivateKey, signCert 
 	return nil
 }
 
-//generate an EC certificate signing(CA) key pair and output as
+//generate an SM2 certificate signing(CA) key pair and output as
 //PEM-encoded files
-func genCertificateAuthorityECDSA(name string) (*ecdsa.PrivateKey, *x509.Certificate, error) {
+func genCertificateAuthoritySM2(name string) (*sm2.PrivateKey, *sm2.Certificate, error) {
 
-	key, err := genKeyECDSA(name)
+	key, err := genKeySM2(name)
 	template, err := x509Template()
 
 	if err != nil {
@@ -191,8 +190,8 @@ func genCertificateAuthorityECDSA(name string) (*ecdsa.PrivateKey, *x509.Certifi
 
 	//this is a CA
 	template.IsCA = true
-	template.KeyUsage |= x509.KeyUsageCertSign | x509.KeyUsageCRLSign
-	template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageAny}
+	template.KeyUsage |= sm2.KeyUsageCertSign | sm2.KeyUsageCRLSign
+	template.ExtKeyUsage = []sm2.ExtKeyUsage{sm2.ExtKeyUsageAny}
 
 	//set the organization for the subject
 	subject := subjectTemplate()
@@ -202,7 +201,7 @@ func genCertificateAuthorityECDSA(name string) (*ecdsa.PrivateKey, *x509.Certifi
 	template.Subject = subject
 	template.SubjectKeyId = []byte{1, 2, 3, 4}
 
-	x509Cert, err := genCertificateECDSA(name, &template, &template, &key.PublicKey, key)
+	x509Cert, err := genCertificateSM2(name, &template, &template, &key.PublicKey, key)
 
 	if err != nil {
 		return nil, nil, err
@@ -210,12 +209,12 @@ func genCertificateAuthorityECDSA(name string) (*ecdsa.PrivateKey, *x509.Certifi
 	return key, x509Cert, nil
 }
 
-//generate an EC certificate appropriate for use by a TLS server
-func genIntermediateCertificateAuthorityECDSA(name string, signKey *ecdsa.PrivateKey,
-	signCert *x509.Certificate) (*ecdsa.PrivateKey, *x509.Certificate, error) {
+//generate an SM2 certificate appropriate for use by a TLS server
+func genIntermediateCertificateAuthoritySM2(name string, signKey *sm2.PrivateKey,
+	signCert *sm2.Certificate) (*sm2.PrivateKey, *sm2.Certificate, error) {
 
 	fmt.Println(name)
-	key, err := genKeyECDSA(name)
+	key, err := genKeySM2(name)
 	template, err := x509Template()
 
 	if err != nil {
@@ -224,8 +223,8 @@ func genIntermediateCertificateAuthorityECDSA(name string, signKey *ecdsa.Privat
 
 	//this is a CA
 	template.IsCA = true
-	template.KeyUsage |= x509.KeyUsageCertSign | x509.KeyUsageCRLSign
-	template.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageAny}
+	template.KeyUsage |= sm2.KeyUsageCertSign | sm2.KeyUsageCRLSign
+	template.ExtKeyUsage = []sm2.ExtKeyUsage{sm2.ExtKeyUsageAny}
 
 	//set the organization for the subject
 	subject := subjectTemplate()
@@ -235,7 +234,7 @@ func genIntermediateCertificateAuthorityECDSA(name string, signKey *ecdsa.Privat
 	template.Subject = subject
 	template.SubjectKeyId = []byte{1, 2, 3, 4}
 
-	x509Cert, err := genCertificateECDSA(name, &template, signCert, &key.PublicKey, signKey)
+	x509Cert, err := genCertificateSM2(name, &template, signCert, &key.PublicKey, signKey)
 
 	if err != nil {
 		return nil, nil, err
@@ -254,13 +253,13 @@ func main() {
 	baseOrgName := "Org"
 	//generate orgs / CAs
 	for i := 1; i <= *numOrgs; i++ {
-		signKey, signCert, err := genCertificateAuthorityECDSA(fmt.Sprintf(baseOrgName+"%d", i))
+		signKey, signCert, err := genCertificateAuthoritySM2(fmt.Sprintf(baseOrgName+"%d", i))
 		if err != nil {
 			fmt.Printf("error generating CA %s%d : %s\n", baseOrgName, i, err.Error())
 		}
 		//generate server certificates for the org
 		for j := 1; j <= *numServerCerts; j++ {
-			err := genServerCertificateECDSA(fmt.Sprintf(baseOrgName+"%d-server%d", i, j), signKey, signCert)
+			err := genServerCertificateSM2(fmt.Sprintf(baseOrgName+"%d-server%d", i, j), signKey, signCert)
 			if err != nil {
 				fmt.Printf("error generating server certificate for %s%d-server%d : %s\n",
 					baseOrgName, i, j, err.Error())
@@ -268,7 +267,7 @@ func main() {
 		}
 		//generate client certificates for the org
 		for k := 1; k <= *numClientCerts; k++ {
-			err := genClientCertificateECDSA(fmt.Sprintf(baseOrgName+"%d-client%d", i, k), signKey, signCert)
+			err := genClientCertificateSM2(fmt.Sprintf(baseOrgName+"%d-client%d", i, k), signKey, signCert)
 			if err != nil {
 				fmt.Printf("error generating client certificate for %s%d-client%d : %s\n",
 					baseOrgName, i, k, err.Error())
@@ -276,7 +275,7 @@ func main() {
 		}
 		//generate child orgs (intermediary authorities)
 		for m := 1; m <= *numChildOrgs; m++ {
-			childSignKey, childSignCert, err := genIntermediateCertificateAuthorityECDSA(
+			childSignKey, childSignCert, err := genIntermediateCertificateAuthoritySM2(
 				fmt.Sprintf(baseOrgName+"%d-child%d", i, m), signKey, signCert)
 			if err != nil {
 				fmt.Printf("error generating CA %s%d-child%d : %s\n",
@@ -284,7 +283,7 @@ func main() {
 			}
 			//generate server certificates for the child org
 			for n := 1; n <= *numServerCerts; n++ {
-				err := genServerCertificateECDSA(fmt.Sprintf(baseOrgName+"%d-child%d-server%d", i, m, n),
+				err := genServerCertificateSM2(fmt.Sprintf(baseOrgName+"%d-child%d-server%d", i, m, n),
 					childSignKey, childSignCert)
 				if err != nil {
 					fmt.Printf("error generating server certificate for %s%d-child%d-server%d : %s\n",
@@ -293,7 +292,7 @@ func main() {
 			}
 			//generate client certificates for the child org
 			for p := 1; p <= *numClientCerts; p++ {
-				err := genClientCertificateECDSA(fmt.Sprintf(baseOrgName+"%d-child%d-client%d", i, m, p),
+				err := genClientCertificateSM2(fmt.Sprintf(baseOrgName+"%d-child%d-client%d", i, m, p),
 					childSignKey, childSignCert)
 				if err != nil {
 					fmt.Printf("error generating server certificate for %s%d-child%d-client%d : %s\n",

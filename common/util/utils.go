@@ -35,7 +35,7 @@ type alg struct {
 	hashFun func([]byte) string
 }
 
-const defaultAlg = "sha256"
+const defaultAlg = "sm3"
 
 var availableIDgenAlgs = map[string]alg{
 	defaultAlg: {GenerateIDfromTxSHAHash},
@@ -55,6 +55,15 @@ func ComputeSHA3256(data []byte) (hash []byte) {
 	hash, err := factory.GetDefault().Hash(data, &bccsp.SHA3_256Opts{})
 	if err != nil {
 		panic(fmt.Errorf("Failed computing SHA3_256 on [% x]", data))
+	}
+	return
+}
+
+// ComputeSM3 returns SM3 on data
+func ComputeSM3(data []byte) (hash []byte) {
+	hash, err := factory.GetDefault().Hash(data, &bccsp.SM3Opts{})
+	if err != nil {
+		panic(fmt.Errorf("Failed computing SM3 on [% x]", data))
 	}
 	return
 }
@@ -99,12 +108,12 @@ func CreateUtcTimestamp() *timestamp.Timestamp {
 
 //GenerateHashFromSignature returns a hash of the combined parameters
 func GenerateHashFromSignature(path string, args []byte) []byte {
-	return ComputeSHA256(args)
+	return ComputeSM3(args)
 }
 
-// GenerateIDfromTxSHAHash generates SHA256 hash using Tx payload
+// GenerateIDfromTxSHAHash generates SM3 hash using Tx payload
 func GenerateIDfromTxSHAHash(payload []byte) string {
-	return fmt.Sprintf("%x", ComputeSHA256(payload))
+	return fmt.Sprintf("%x", ComputeSM3(payload))
 }
 
 // GenerateIDWithAlg generates an ID using a custom algorithm

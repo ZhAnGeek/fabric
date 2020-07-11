@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package crypto_test
 
 import (
-	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -21,6 +20,7 @@ import (
 	"github.com/hyperledger/fabric/protos/msp"
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 func TestX509CertExpiresAt(t *testing.T) {
@@ -75,7 +75,7 @@ func TestTrackExpiration(t *testing.T) {
 
 	now := time.Now()
 	bl, _ := pem.Decode(ca.CertBytes())
-	caCert, err := x509.ParseCertificate(bl.Bytes)
+	caCert, err := sm2.ParseCertificate(bl.Bytes)
 	assert.NoError(t, err)
 	expirationTime := caCert.NotAfter
 

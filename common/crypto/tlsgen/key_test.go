@@ -7,12 +7,12 @@ SPDX-License-Identifier: Apache-2.0
 package tlsgen
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/pem"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
 )
 
 func TestCertEncoding(t *testing.T) {
@@ -34,7 +34,7 @@ func TestLoadCert(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, tlsCertPair)
 	block, _ := pem.Decode(pair.Cert)
-	cert, err := x509.ParseCertificate(block.Bytes)
+	cert, err := sm2.ParseCertificate(block.Bytes)
 	assert.NoError(t, err)
 	assert.NotNil(t, cert)
 }

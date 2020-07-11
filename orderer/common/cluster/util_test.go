@@ -36,6 +36,7 @@ import (
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tjfoc/gmsm/sm2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -143,7 +144,7 @@ func TestDialerBadConfig(t *testing.T) {
 			},
 		},
 	}
-	_, err := dialer.Dial("127.0.0.1:8080", func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+	_, err := dialer.Dial("127.0.0.1:8080", func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error {
 		return nil
 	})
 	assert.EqualError(t, err, "error adding root certificate: asn1: syntax error: sequence truncated")
@@ -573,7 +574,7 @@ func TestEndpointconfigFromConfigBlockGreenPath(t *testing.T) {
 		assert.Equal(t, "globalEndpoint", endpointConfig[0].Endpoint)
 
 		bl, _ := pem.Decode(endpointConfig[0].TLSRootCAs[0])
-		cert, err := x509.ParseCertificate(bl.Bytes)
+		cert, err := sm2.ParseCertificate(bl.Bytes)
 		assert.NoError(t, err)
 
 		assert.True(t, cert.IsCA)

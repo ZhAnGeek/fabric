@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package server_test
 
 import (
-	"crypto/sha256"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -18,6 +17,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmsm/sm3"
 )
 
 var _ = Describe("Marshal", func() {
@@ -115,7 +115,8 @@ var _ = Describe("Marshal", func() {
 			expectedTimestamp, err := ptypes.TimestampProto(now)
 			Expect(err).NotTo(HaveOccurred())
 
-			commandHash := sha256.Sum256([]byte("command"))
+			hash := sm3.New()
+			commandHash := hash.Sum([]byte("command"))
 			expectedResponseHeader = &token.CommandResponseHeader{
 				Creator:     []byte("creator"),
 				CommandHash: commandHash[:],

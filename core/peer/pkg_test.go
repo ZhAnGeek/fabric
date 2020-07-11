@@ -8,8 +8,6 @@ package peer_test
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"io/ioutil"
 	"net"
@@ -31,8 +29,10 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
+	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 // default timeout for grpc connections
@@ -46,8 +46,8 @@ func (tss *testServiceServer) EmptyCall(context.Context, *testpb.Empty) (*testpb
 }
 
 // createCertPool creates an x509.CertPool from an array of PEM-encoded certificates
-func createCertPool(rootCAs [][]byte) (*x509.CertPool, error) {
-	certPool := x509.NewCertPool()
+func createCertPool(rootCAs [][]byte) (*sm2.CertPool, error) {
+	certPool := sm2.NewCertPool()
 	for _, rootCA := range rootCAs {
 		if !certPool.AppendCertsFromPEM(rootCA) {
 			return nil, errors.New("Failed to load root certificates")

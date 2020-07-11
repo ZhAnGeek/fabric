@@ -21,12 +21,12 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/x509"
 	"encoding/asn1"
 	"encoding/pem"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 func TestOidFromNamedCurve(t *testing.T) {
@@ -100,30 +100,30 @@ func TestOidFromNamedCurve(t *testing.T) {
 
 }
 
-func TestECDSAKeys(t *testing.T) {
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+func TestSM2Keys(t *testing.T) {
+	key, err := sm2.GenerateKey()
 	if err != nil {
 		t.Fatalf("Failed generating ECDSA key [%s]", err)
 	}
 
 	// Private Key DER format
-	der, err := PrivateKeyToDER(key)
+	der, err := sm2.MarshalSm2UnecryptedPrivateKey(key)
 	if err != nil {
 		t.Fatalf("Failed converting private key to DER [%s]", err)
 	}
-	keyFromDER, err := DERToPrivateKey(der)
+	keyFromDER, err := sm2.ParsePKCS8PrivateKey(der, nil)
 	if err != nil {
 		t.Fatalf("Failed converting DER to private key [%s]", err)
 	}
-	ecdsaKeyFromDer := keyFromDER.(*ecdsa.PrivateKey)
+	sm2KeyFromDer := keyFromDER
 	// TODO: check the curve
-	if key.D.Cmp(ecdsaKeyFromDer.D) != 0 {
+	if key.D.Cmp(sm2KeyFromDer.D) != 0 {
 		t.Fatal("Failed converting DER to private key. Invalid D.")
 	}
-	if key.X.Cmp(ecdsaKeyFromDer.X) != 0 {
+	if key.X.Cmp(sm2KeyFromDer.X) != 0 {
 		t.Fatal("Failed converting DER to private key. Invalid X coordinate.")
 	}
-	if key.Y.Cmp(ecdsaKeyFromDer.Y) != 0 {
+	if key.Y.Cmp(sm2KeyFromDer.Y) != 0 {
 		t.Fatal("Failed converting DER to private key. Invalid Y coordinate.")
 	}
 
@@ -136,7 +136,7 @@ func TestECDSAKeys(t *testing.T) {
 	if pemBlock.Type != "PRIVATE KEY" {
 		t.Fatalf("Expected type 'PRIVATE KEY' but found '%s'", pemBlock.Type)
 	}
-	_, err = x509.ParsePKCS8PrivateKey(pemBlock.Bytes)
+	_, err = sm2.ParsePKCS8PrivateKey(pemBlock.Bytes, nil)
 	if err != nil {
 		t.Fatalf("Failed to parse PKCS#8 private key [%s]", err)
 	}
@@ -144,15 +144,15 @@ func TestECDSAKeys(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed converting DER to private key [%s]", err)
 	}
-	ecdsaKeyFromPEM := keyFromPEM.(*ecdsa.PrivateKey)
+	sm2KeyFromPEM := keyFromPEM.(*sm2.PrivateKey)
 	// TODO: check the curve
-	if key.D.Cmp(ecdsaKeyFromPEM.D) != 0 {
+	if key.D.Cmp(sm2KeyFromPEM.D) != 0 {
 		t.Fatal("Failed converting PEM to private key. Invalid D.")
 	}
-	if key.X.Cmp(ecdsaKeyFromPEM.X) != 0 {
+	if key.X.Cmp(sm2KeyFromPEM.X) != 0 {
 		t.Fatal("Failed converting PEM to private key. Invalid X coordinate.")
 	}
-	if key.Y.Cmp(ecdsaKeyFromPEM.Y) != 0 {
+	if key.Y.Cmp(sm2KeyFromPEM.Y) != 0 {
 		t.Fatal("Failed converting PEM to private key. Invalid Y coordinate.")
 	}
 
@@ -162,12 +162,7 @@ func TestECDSAKeys(t *testing.T) {
 		t.Fatal("PublicKeyToPEM should fail on nil")
 	}
 
-	_, err = PrivateKeyToPEM((*ecdsa.PrivateKey)(nil), nil)
-	if err == nil {
-		t.Fatal("PrivateKeyToPEM should fail on nil")
-	}
-
-	_, err = PrivateKeyToPEM((*rsa.PrivateKey)(nil), nil)
+	_, err = PrivateKeyToPEM((*sm2.PrivateKey)(nil), nil)
 	if err == nil {
 		t.Fatal("PrivateKeyToPEM should fail on nil")
 	}
@@ -208,20 +203,20 @@ func TestECDSAKeys(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed converting DER to private key [%s]", err)
 	}
-	ecdsaKeyFromEncPEM := encKeyFromPEM.(*ecdsa.PrivateKey)
+	sm2KeyFromEncPEM := encKeyFromPEM.(*sm2.PrivateKey)
 	// TODO: check the curve
-	if key.D.Cmp(ecdsaKeyFromEncPEM.D) != 0 {
+	if key.D.Cmp(sm2KeyFromEncPEM.D) != 0 {
 		t.Fatal("Failed converting encrypted PEM to private key. Invalid D.")
 	}
-	if key.X.Cmp(ecdsaKeyFromEncPEM.X) != 0 {
+	if key.X.Cmp(sm2KeyFromEncPEM.X) != 0 {
 		t.Fatal("Failed converting encrypted PEM to private key. Invalid X coordinate.")
 	}
-	if key.Y.Cmp(ecdsaKeyFromEncPEM.Y) != 0 {
+	if key.Y.Cmp(sm2KeyFromEncPEM.Y) != 0 {
 		t.Fatal("Failed converting encrypted PEM to private key. Invalid Y coordinate.")
 	}
 
 	// Public Key PEM format
-	rawPEM, err = PublicKeyToPEM(&key.PublicKey, nil)
+	rawPEM, err = sm2.WritePublicKeytoMem(&key.PublicKey, nil)
 	if err != nil {
 		t.Fatalf("Failed converting public key to PEM [%s]", err)
 	}
@@ -229,16 +224,16 @@ func TestECDSAKeys(t *testing.T) {
 	if pemBlock.Type != "PUBLIC KEY" {
 		t.Fatalf("Expected type 'PUBLIC KEY' but found '%s'", pemBlock.Type)
 	}
-	keyFromPEM, err = PEMtoPublicKey(rawPEM, nil)
+	keyFromPEM, err = sm2.ReadPublicKeyFromMem(rawPEM, nil)
 	if err != nil {
 		t.Fatalf("Failed converting DER to public key [%s]", err)
 	}
-	ecdsaPkFromPEM := keyFromPEM.(*ecdsa.PublicKey)
+	sm2PkFromPEM := keyFromPEM.(*sm2.PublicKey)
 	// TODO: check the curve
-	if key.X.Cmp(ecdsaPkFromPEM.X) != 0 {
+	if key.X.Cmp(sm2PkFromPEM.X) != 0 {
 		t.Fatal("Failed converting PEM to private key. Invalid X coordinate.")
 	}
-	if key.Y.Cmp(ecdsaPkFromPEM.Y) != 0 {
+	if key.Y.Cmp(sm2PkFromPEM.Y) != 0 {
 		t.Fatal("Failed converting PEM to private key. Invalid Y coordinate.")
 	}
 
@@ -259,87 +254,46 @@ func TestECDSAKeys(t *testing.T) {
 	}
 
 	// Public Key Encrypted PEM format
-	encPEM, err = PublicKeyToPEM(&key.PublicKey, []byte("passwd"))
+	encPEM, err = sm2.WritePublicKeytoMem(&key.PublicKey, []byte("passwd"))
 	if err != nil {
 		t.Fatalf("Failed converting private key to encrypted PEM [%s]", err)
 	}
-	_, err = PEMtoPublicKey(encPEM, nil)
-	assert.Error(t, err)
-	pkFromEncPEM, err := PEMtoPublicKey(encPEM, []byte("passwd"))
+	pkFromEncPEM, err := sm2.ReadPublicKeyFromMem(encPEM, []byte("passwd"))
 	if err != nil {
 		t.Fatalf("Failed converting DER to private key [%s]", err)
 	}
-	ecdsaPkFromEncPEM := pkFromEncPEM.(*ecdsa.PublicKey)
+	sm2PkFromEncPEM := pkFromEncPEM
 	// TODO: check the curve
-	if key.X.Cmp(ecdsaPkFromEncPEM.X) != 0 {
+	if key.X.Cmp(sm2PkFromEncPEM.X) != 0 {
 		t.Fatal("Failed converting encrypted PEM to private key. Invalid X coordinate.")
 	}
-	if key.Y.Cmp(ecdsaPkFromEncPEM.Y) != 0 {
+	if key.Y.Cmp(sm2PkFromEncPEM.Y) != 0 {
 		t.Fatal("Failed converting encrypted PEM to private key. Invalid Y coordinate.")
-	}
-
-	_, err = PEMtoPublicKey(encPEM, []byte("passw"))
-	if err == nil {
-		t.Fatal("PEMtoPublicKey should fail on wrong password")
-	}
-
-	_, err = PEMtoPublicKey(encPEM, []byte("passw"))
-	if err == nil {
-		t.Fatal("PEMtoPublicKey should fail on nil password")
-	}
-
-	_, err = PEMtoPublicKey(nil, []byte("passwd"))
-	if err == nil {
-		t.Fatal("PEMtoPublicKey should fail on nil PEM")
-	}
-
-	_, err = PEMtoPublicKey([]byte{0, 1, 3, 4}, []byte("passwd"))
-	if err == nil {
-		t.Fatal("PEMtoPublicKey should fail on invalid PEM")
-	}
-
-	_, err = PEMtoPublicKey(nil, []byte("passw"))
-	if err == nil {
-		t.Fatal("PEMtoPublicKey should fail on nil PEM and wrong password")
-	}
-
-	// Public Key DER format
-	der, err = PublicKeyToDER(&key.PublicKey)
-	assert.NoError(t, err)
-	keyFromDER, err = DERToPublicKey(der)
-	assert.NoError(t, err)
-	ecdsaPkFromPEM = keyFromDER.(*ecdsa.PublicKey)
-	// TODO: check the curve
-	if key.X.Cmp(ecdsaPkFromPEM.X) != 0 {
-		t.Fatal("Failed converting PEM to private key. Invalid X coordinate.")
-	}
-	if key.Y.Cmp(ecdsaPkFromPEM.Y) != 0 {
-		t.Fatal("Failed converting PEM to private key. Invalid Y coordinate.")
 	}
 }
 
-func TestAESKey(t *testing.T) {
+func TestSM3Key(t *testing.T) {
 	k := []byte{0, 1, 2, 3, 4, 5}
-	pem := AEStoPEM(k)
+	pem := SM4toPEM(k)
 
-	k2, err := PEMtoAES(pem, nil)
+	k2, err := PEMtoSM4(pem, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, k, k2)
 
-	pem, err = AEStoEncryptedPEM(k, k)
+	pem, err = SM4toEncryptedPEM(k, k)
 	assert.NoError(t, err)
 
-	k2, err = PEMtoAES(pem, k)
+	k2, err = PEMtoSM4(pem, k)
 	assert.NoError(t, err)
 	assert.Equal(t, k, k2)
 
-	_, err = PEMtoAES(pem, nil)
+	_, err = PEMtoSM4(pem, nil)
 	assert.Error(t, err)
 
-	_, err = AEStoEncryptedPEM(k, nil)
+	_, err = SM4toEncryptedPEM(k, nil)
 	assert.NoError(t, err)
 
-	k2, err = PEMtoAES(pem, k)
+	k2, err = PEMtoSM4(pem, k)
 	assert.NoError(t, err)
 	assert.Equal(t, k, k2)
 }

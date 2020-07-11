@@ -3,9 +3,9 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-OrganizationalUnitIdentifiers:
-  - Certificate: "cacerts/cacert.pem"
-    OrganizationalUnitIdentifier: "COP"
+# OrganizationalUnitIdentifiers:
+#   - Certificate: "cacerts/cacert.pem"
+#     OrganizationalUnitIdentifier: "COP"
 
 NodeOUs:
   Enable: false
@@ -17,14 +17,14 @@ NodeOUs:
   # able to add other CA or intermediate certs later, without having to reissue all credentials.
   # For this reason, the sample below comments out the Certificate field.
   ClientOUIdentifier:
-    # Certificate: "cacerts/cacert.pem"
-    OrganizationalUnitIdentifier: "OU_client"
+    Certificate: "cacerts/cacert.pem"
+    # OrganizationalUnitIdentifier: "OU_client"
   PeerOUIdentifier:
-    # Certificate: "cacerts/cacert.pem"
-    OrganizationalUnitIdentifier: "OU_peer"
+    Certificate: "cacerts/cacert.pem"
+    # OrganizationalUnitIdentifier: "OU_peer"
   AdminOUIdentifier:
-    # Certificate: "cacerts/cacert.pem"
-    OrganizationalUnitIdentifier: "OU_admin"
+    Certificate: "cacerts/cacert.pem"
+    # OrganizationalUnitIdentifier: "OU_admin"
   OrdererOUIdentifier:
-    # Certificate: "cacerts/cacert.pem"
-    OrganizationalUnitIdentifier: "OU_orderer"
+    Certificate: "cacerts/cacert.pem"
+    # OrganizationalUnitIdentifier: "OU_orderer"

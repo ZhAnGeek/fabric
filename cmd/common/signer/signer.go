@@ -7,21 +7,17 @@ SPDX-License-Identifier: Apache-2.0
 package signer
 
 import (
-	"crypto/ecdsa"
 	"crypto/rand"
-	"crypto/x509"
-	"encoding/asn1"
 	"encoding/pem"
 	"io/ioutil"
-	"math/big"
 
-	"github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/hyperledger/fabric/common/crypto"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/msp"
 	proto_utils "github.com/hyperledger/fabric/protos/utils"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 // Config holds the configuration for
@@ -37,7 +33,7 @@ type Config struct {
 // initialize an MSP without a CA cert that signs the signing identity,
 // this will do for now.
 type Signer struct {
-	key     *ecdsa.PrivateKey
+	key     *sm2.PrivateKey
 	Creator []byte
 }
 
@@ -81,11 +77,11 @@ func serializeIdentity(clientCert string, mspID string) ([]byte, error) {
 }
 
 func (si *Signer) Sign(msg []byte) ([]byte, error) {
-	digest := util.ComputeSHA256(msg)
-	return signECDSA(si.key, digest)
+	digest := util.ComputeSM3(msg)
+	return signSM2(si.key, digest)
 }
 
-func loadPrivateKey(file string) (*ecdsa.PrivateKey, error) {
+func loadPrivateKey(file string) (*sm2.PrivateKey, error) {
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -94,31 +90,18 @@ func loadPrivateKey(file string) (*ecdsa.PrivateKey, error) {
 	if bl == nil {
 		return nil, errors.Errorf("failed to decode PEM block from %s", file)
 	}
-	key, err := x509.ParsePKCS8PrivateKey(bl.Bytes)
+	key, err := sm2.ParsePKCS8UnecryptedPrivateKey(bl.Bytes)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to parse private key from %s", file)
 	}
-	return key.(*ecdsa.PrivateKey), nil
+	return key, nil
 }
 
-func signECDSA(k *ecdsa.PrivateKey, digest []byte) (signature []byte, err error) {
-	r, s, err := ecdsa.Sign(rand.Reader, k, digest)
+func signSM2(k *sm2.PrivateKey, digest []byte) ([]byte, error) {
+	signature, err := k.Sign(rand.Reader, digest, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	s, err = utils.ToLowS(&k.PublicKey, s)
-	if err != nil {
-		return nil, err
-	}
-
-	return marshalECDSASignature(r, s)
-}
-
-func marshalECDSASignature(r, s *big.Int) ([]byte, error) {
-	return asn1.Marshal(ECDSASignature{r, s})
-}
-
-type ECDSASignature struct {
-	R, S *big.Int
+	return signature, nil
 }

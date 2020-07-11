@@ -312,9 +312,9 @@ func TestLoadLocalMSP(t *testing.T) {
 						LocalMSPDir: localMSPDir,
 						LocalMSPID:  "SampleOrg",
 						BCCSP: &factory.FactoryOpts{
-							ProviderName: "SW",
+							ProviderName: "GM",
 							SwOpts: &factory.SwOpts{
-								HashFamily: "SHA2",
+								HashFamily: "SM3",
 								SecLevel:   256,
 								Ephemeral:  true,
 							},

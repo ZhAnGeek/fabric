@@ -94,7 +94,7 @@ func (s *MSPMessageCryptoService) GetPKIidOfCert(peerIdentity api.PeerIdentityTy
 	raw := append(mspIdRaw, sid.IdBytes...)
 
 	// Hash
-	digest, err := factory.GetDefault().Hash(raw, &bccsp.SHA256Opts{})
+	digest, err := factory.GetDefault().Hash(raw, &bccsp.SM3Opts{})
 	if err != nil {
 		mcsLogger.Errorf("Failed computing digest of serialized identity [% x]: [%s]", peerIdentity, err)
 

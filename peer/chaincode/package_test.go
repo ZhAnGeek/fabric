@@ -40,7 +40,7 @@ func TestMain(m *testing.M) {
 }
 
 func newTempDir() string {
-	tempDir, err := ioutil.TempDir("/tmp", "packagetest-")
+	tempDir, err := ioutil.TempDir("", "packagetest-")
 	if err != nil {
 		panic(err)
 	}

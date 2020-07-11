@@ -422,7 +422,7 @@ func TestGetBytesProposalPayloadForTx(t *testing.T) {
 }
 
 func TestGetProposalHash2(t *testing.T) {
-	expectedHashHex := "7b622ef4e1ab9b7093ec3bbfbca17d5d6f14a437914a6839319978a7034f7960"
+	expectedHashHex := "0636f1240cb1b2e5922175328ae7c35aca2935a5d7dd4ceb0b868a8aa3404ce8"
 	expectedHash, _ := hex.DecodeString(expectedHashHex)
 	hdr := &cb.Header{
 		ChannelHeader:   []byte("chdr"),
@@ -440,7 +440,7 @@ func TestGetProposalHash2(t *testing.T) {
 }
 
 func TestGetProposalHash1(t *testing.T) {
-	expectedHashHex := "d4c1e3cac2105da5fddc2cfe776d6ec28e4598cf1e6fa51122c7f70d8076437b"
+	expectedHashHex := "3af30298cd454052642ce8ee745ae0dc00766e22c971e5a4320e6b0f4fef059d"
 	expectedHash, _ := hex.DecodeString(expectedHashHex)
 	hdr := &cb.Header{
 		ChannelHeader:   []byte("chdr"),

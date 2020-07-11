@@ -6,10 +6,9 @@ SPDX-License-Identifier: Apache-2.0
 package handlers
 
 import (
-	"crypto/sha256"
-
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmsm/sm3"
 )
 
 // nymSecretKey contains the nym secret key
@@ -30,7 +29,7 @@ func computeSKI(serialise func() ([]byte, error)) ([]byte, error) {
 		return nil, err
 	}
 
-	hash := sha256.New()
+	hash := sm3.New()
 	hash.Write(raw)
 	return hash.Sum(nil), nil
 

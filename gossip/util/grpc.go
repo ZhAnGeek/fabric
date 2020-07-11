@@ -7,8 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package util
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"net"
 	"strconv"
@@ -18,8 +16,10 @@ import (
 	"github.com/hyperledger/fabric/core/comm"
 	"github.com/hyperledger/fabric/gossip/api"
 	"github.com/hyperledger/fabric/gossip/common"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
+	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 // CA that generates TLS key-pairs
@@ -58,7 +58,7 @@ func CreateGRPCLayer() (port int, gRPCServer *comm.GRPCServer, certs *common.TLS
 	tlsConf := &tls.Config{
 		Certificates: []tls.Certificate{tlsClientCert},
 		ClientAuth:   tls.RequestClientCert,
-		RootCAs:      x509.NewCertPool(),
+		RootCAs:      sm2.NewCertPool(),
 	}
 
 	tlsConf.RootCAs.AppendCertsFromPEM(ca.CertBytes())

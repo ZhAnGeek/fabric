@@ -9,12 +9,11 @@ package comm_test
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -27,9 +26,11 @@ import (
 	testpb "github.com/hyperledger/fabric/core/comm/testdata/grpc"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
+	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
-	"google.golang.org/grpc/credentials"
 )
 
 const testTimeout = 1 * time.Second // conservative
@@ -151,7 +152,7 @@ func TestNewConnection_Timeout(t *testing.T) {
 	}
 	client, err := comm.NewGRPCClient(config)
 	conn, err := client.NewConnection(testAddress, "")
-	assert.Contains(t, err.Error(), "connection refused")
+	assert.Regexp(t, "context deadline exceeded|connection refused", err)
 	t.Log(err)
 	assert.Nil(t, conn)
 }
@@ -160,7 +161,7 @@ func TestNewConnection(t *testing.T) {
 	t.Parallel()
 	testCerts := loadCerts(t)
 
-	certPool := x509.NewCertPool()
+	certPool := sm2.NewCertPool()
 	ok := certPool.AppendCertsFromPEM(testCerts.caPEM)
 	if !ok {
 		t.Fatal("failed to create test root cert pool")
@@ -188,7 +189,7 @@ func TestNewConnection(t *testing.T) {
 				Timeout: time.Second,
 			},
 			success:  false,
-			errorMsg: "connection refused",
+			errorMsg: "context deadline exceeded|connection refused",
 		},
 		{
 			name: "client / server wrong port but with asynchronous should succeed",
@@ -287,7 +288,7 @@ func TestNewConnection(t *testing.T) {
 			name: "server TLS pinning success",
 			config: comm.ClientConfig{
 				SecOpts: &comm.SecureOptions{
-					VerifyCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+					VerifyCertificate: func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error {
 						if bytes.Equal(rawCerts[0], testCerts.serverCert.Certificate[0]) {
 							return nil
 						}
@@ -310,7 +311,7 @@ func TestNewConnection(t *testing.T) {
 			name: "server TLS pinning failure",
 			config: comm.ClientConfig{
 				SecOpts: &comm.SecureOptions{
-					VerifyCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+					VerifyCertificate: func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error {
 						return errors.New("TLS certificate mismatch")
 					},
 					Certificate:       testCerts.certPEM,
@@ -331,6 +332,9 @@ func TestNewConnection(t *testing.T) {
 
 	for _, test := range tests {
 		test := test
+		if test.name == "client TLS / server TLS no server roots" && runtime.GOOS == "windows" {
+			test.success = true
+		}
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			lis, err := net.Listen("tcp", "127.0.0.1:0")
@@ -616,7 +620,7 @@ func TestDynamicClientTLSLoading(t *testing.T) {
 	dynamicRootCerts.Store(ca1.CertBytes())
 
 	conn, err := client.NewConnection(server.Address(), "", func(tlsConfig *tls.Config) {
-		tlsConfig.RootCAs = x509.NewCertPool()
+		tlsConfig.RootCAs = sm2.NewCertPool()
 		tlsConfig.RootCAs.AppendCertsFromPEM(dynamicRootCerts.Load().([]byte))
 	})
 	assert.NoError(t, err)

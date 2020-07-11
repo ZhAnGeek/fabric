@@ -25,12 +25,12 @@ func initOnce() {
 func GetEncrypterEntityForTest(id string) (EncrypterEntity, error) {
 	o.Do(initOnce)
 
-	sk, err := bccspInst.KeyGen(&b.AES256KeyGenOpts{Temporary: true})
+	sk, err := bccspInst.KeyGen(&b.SM4KeyGenOpts{Temporary: true})
 	if err != nil {
 		return nil, fmt.Errorf("GetEncrypterEntityForTest error: KeyGen returned %s", err)
 	}
 
-	ent, err := NewEncrypterEntity(id, bccspInst, sk, &b.AESCBCPKCS7ModeOpts{}, &b.AESCBCPKCS7ModeOpts{})
+	ent, err := NewEncrypterEntity(id, bccspInst, sk, &b.SM4CBCPKCS7ModeOpts{}, &b.SM4CBCPKCS7ModeOpts{})
 	if err != nil {
 		return nil, fmt.Errorf("GetEncrypterEntityForTest error: NewEncrypterEntity returned %s", err)
 	}
@@ -41,17 +41,17 @@ func GetEncrypterEntityForTest(id string) (EncrypterEntity, error) {
 func GetEncrypterSignerEntityForTest(id string) (EncrypterSignerEntity, error) {
 	o.Do(initOnce)
 
-	sk_enc, err := bccspInst.KeyGen(&b.AES256KeyGenOpts{Temporary: true})
+	sk_enc, err := bccspInst.KeyGen(&b.SM4KeyGenOpts{Temporary: true})
 	if err != nil {
 		return nil, fmt.Errorf("GetEncrypterSignerEntityForTest error: KeyGen returned %s", err)
 	}
 
-	sk_sig, err := bccspInst.KeyGen(&b.ECDSAP256KeyGenOpts{Temporary: true})
+	sk_sig, err := bccspInst.KeyGen(&b.SM2KeyGenOpts{Temporary: true})
 	if err != nil {
 		return nil, fmt.Errorf("GetEncrypterSignerEntityForTest error: KeyGen returned %s", err)
 	}
 
-	ent, err := NewEncrypterSignerEntity(id, bccspInst, sk_enc, sk_sig, &b.AESCBCPKCS7ModeOpts{}, &b.AESCBCPKCS7ModeOpts{}, nil, &b.SHA256Opts{})
+	ent, err := NewEncrypterSignerEntity(id, bccspInst, sk_enc, sk_sig, &b.SM4CBCPKCS7ModeOpts{}, &b.SM4CBCPKCS7ModeOpts{}, nil, &b.SM3Opts{})
 	if err != nil {
 		return nil, fmt.Errorf("GetEncrypterSignerEntityForTest error: NewEncrypterSignerEntity returned %s", err)
 	}

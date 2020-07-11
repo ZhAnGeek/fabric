@@ -8,8 +8,6 @@ package comm
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -20,6 +18,9 @@ import (
 
 	testpb "github.com/hyperledger/fabric/core/comm/testdata/grpc"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -54,7 +55,7 @@ func TestClientConnections(t *testing.T) {
 	certPEMBlock, _ := ioutil.ReadFile(filepath.Join("testdata", "certs", fileBase+"-server1-cert.pem"))
 	keyPEMBlock, _ := ioutil.ReadFile(filepath.Join("testdata", "certs", fileBase+"-server1-key.pem"))
 	caPEMBlock, _ := ioutil.ReadFile(filepath.Join("testdata", "certs", fileBase+"-cert.pem"))
-	certPool := x509.NewCertPool()
+	certPool := sm2.NewCertPool()
 	certPool.AppendCertsFromPEM(caPEMBlock)
 
 	var tests = []struct {
@@ -85,7 +86,7 @@ func TestClientConnections(t *testing.T) {
 					UseTLS:      true,
 					Certificate: certPEMBlock,
 					Key:         keyPEMBlock}},
-			creds: credentials.NewClientTLSFromCert(certPool, ""),
+			creds: gmcredentials.NewClientTLSFromCert(certPool, ""),
 		},
 		{
 			name: "InvalidConnectionTLS",

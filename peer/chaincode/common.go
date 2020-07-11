@@ -8,7 +8,6 @@ package chaincode
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -34,6 +33,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	tls "github.com/tjfoc/gmtls"
 )
 
 // checkSpec to see if chaincode resides within current package capture for language.
@@ -697,7 +697,7 @@ func createDeliverEnvelope(channelID string, certificate tls.Certificate) *pcomm
 	var tlsCertHash []byte
 	// check for client certificate and create hash if present
 	if len(certificate.Certificate) > 0 {
-		tlsCertHash = util.ComputeSHA256(certificate.Certificate[0])
+		tlsCertHash = util.ComputeSM3(certificate.Certificate[0])
 	}
 
 	start := &ab.SeekPosition{

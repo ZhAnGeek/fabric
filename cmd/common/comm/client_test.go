@@ -76,7 +76,7 @@ func TestClientBadConfig(t *testing.T) {
 	}
 	cl, err := NewClient(conf)
 	assert.Nil(t, cl)
-	assert.Contains(t, err.Error(), "open testdata/server/non_existent_file: no such file or directory")
+	assert.Regexp(t, "open testdata/server/non_existent_file: no such file or directory|open testdata\\\\server\\\\non_existent_file: The system cannot find the file specified.", err.Error())
 
 	conf = Config{
 		PeerCACertPath: filepath.Join("testdata", "server", "ca.pem"),
@@ -85,7 +85,7 @@ func TestClientBadConfig(t *testing.T) {
 	}
 	cl, err = NewClient(conf)
 	assert.Nil(t, cl)
-	assert.Contains(t, err.Error(), "open non_existent_file: no such file or directory")
+	assert.Regexp(t, "open non_existent_file: no such file or directory|open non_existent_file: The system cannot find the file specified.", err.Error())
 
 	conf = Config{
 		PeerCACertPath: filepath.Join("testdata", "server", "ca.pem"),
@@ -94,7 +94,7 @@ func TestClientBadConfig(t *testing.T) {
 	}
 	cl, err = NewClient(conf)
 	assert.Nil(t, cl)
-	assert.Contains(t, err.Error(), "open non_existent_file: no such file or directory")
+	assert.Regexp(t, "open non_existent_file: no such file or directory|open non_existent_file: The system cannot find the file specified.", err.Error())
 }
 
 func loadFileOrDie(path string) []byte {

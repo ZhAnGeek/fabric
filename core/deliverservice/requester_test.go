@@ -8,8 +8,6 @@ package deliverclient
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"io/ioutil"
 	"path/filepath"
 	"testing"
@@ -22,8 +20,10 @@ import (
 	"github.com/hyperledger/fabric/protos/orderer"
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
+	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 func TestTLSBinding(t *testing.T) {
@@ -102,7 +102,7 @@ type mockClient struct {
 func createClient(t *testing.T, tlsCert tls.Certificate, caCert []byte) *mockClient {
 	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
-		RootCAs:      x509.NewCertPool(),
+		RootCAs:      sm2.NewCertPool(),
 	}
 	tlsConfig.RootCAs.AppendCertsFromPEM(caCert)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)

@@ -8,8 +8,6 @@ package accesscontrol
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/base64"
 	"fmt"
 	"net"
@@ -21,9 +19,11 @@ import (
 	"github.com/hyperledger/fabric/common/flogging/floggingtest"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
+	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 type ccSrv struct {
@@ -74,7 +74,7 @@ func createTLSService(t *testing.T, ca tlsgen.CA, host string) *grpc.Server {
 	tlsConf := &tls.Config{
 		Certificates: []tls.Certificate{cert},
 		ClientAuth:   tls.RequireAndVerifyClientCert,
-		ClientCAs:    x509.NewCertPool(),
+		ClientCAs:    sm2.NewCertPool(),
 	}
 	tlsConf.ClientCAs.AppendCertsFromPEM(ca.CertBytes())
 	return grpc.NewServer(grpc.Creds(credentials.NewTLS(tlsConf)))
@@ -105,7 +105,7 @@ type ccClient struct {
 
 func newClient(t *testing.T, port int, cert *tls.Certificate, peerCACert []byte) (*ccClient, error) {
 	tlsCfg := &tls.Config{
-		RootCAs:    x509.NewCertPool(),
+		RootCAs:    sm2.NewCertPool(),
 		MaxVersion: tls.VersionTLS12,
 	}
 

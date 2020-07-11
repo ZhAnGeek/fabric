@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/hyperledger/fabric/peer/common"
@@ -48,7 +49,7 @@ func cleanupInstallTest(fsPath string) {
 
 // TestBadVersion tests generation of install command
 func TestBadVersion(t *testing.T) {
-	fsPath := "/tmp/installtest"
+	fsPath := filepath.Join(os.TempDir(), "installtest")
 
 	cmd, _ := initInstallTest(fsPath, t)
 	defer cleanupInstallTest(fsPath)
@@ -63,7 +64,7 @@ func TestBadVersion(t *testing.T) {
 
 // TestNonExistentCC non existent chaincode should fail as expected
 func TestNonExistentCC(t *testing.T) {
-	fsPath := "/tmp/installtest"
+	fsPath := filepath.Join(os.TempDir(), "installtest")
 
 	cmd, _ := initInstallTest(fsPath, t)
 	defer cleanupInstallTest(fsPath)
@@ -85,13 +86,13 @@ func TestInstallFromPackage(t *testing.T) {
 	pdir := newTempDir()
 	defer os.RemoveAll(pdir)
 
-	ccpackfile := pdir + "/ccpack.file"
+	ccpackfile := filepath.Join(pdir, "ccpack.file")
 	err := createSignedCDSPackage([]string{"-n", "somecc", "-p", "some/go/package", "-v", "0", ccpackfile}, false)
 	if err != nil {
 		t.Fatalf("could not create package :%v", err)
 	}
 
-	fsPath := "/tmp/installtest"
+	fsPath := filepath.Join(os.TempDir(), "installtest")
 
 	cmd, mockCF := initInstallTest(fsPath, t)
 	defer cleanupInstallTest(fsPath)
@@ -116,13 +117,13 @@ func TestInstallFromBadPackage(t *testing.T) {
 	pdir := newTempDir()
 	defer os.RemoveAll(pdir)
 
-	ccpackfile := pdir + "/ccpack.file"
+	ccpackfile := filepath.Join(pdir, "ccpack.file")
 	err := ioutil.WriteFile(ccpackfile, []byte("really bad CC package"), 0700)
 	if err != nil {
 		t.Fatalf("could not create package :%v", err)
 	}
 
-	fsPath := "/tmp/installtest"
+	fsPath := filepath.Join(os.TempDir(), "installtest")
 
 	cmd, mockCF := initInstallTest(fsPath, t)
 	defer cleanupInstallTest(fsPath)
@@ -146,7 +147,7 @@ func installEx02(t *testing.T) error {
 	defer viper.Reset()
 	viper.Set("chaincode.mode", "dev")
 
-	fsPath := "/tmp/installtest"
+	fsPath := filepath.Join(os.TempDir(), "installtest")
 	cmd, mockCF := initInstallTest(fsPath, t)
 	defer cleanupInstallTest(fsPath)
 

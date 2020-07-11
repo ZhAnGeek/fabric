@@ -6,7 +6,6 @@ SPDX-License-Identifier: Apache-2.0
 package csp_test
 
 import (
-	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
 	"os"
@@ -16,6 +15,7 @@ import (
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/common/tools/cryptogen/csp"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 // mock implementation of bccsp.Key interface
@@ -62,7 +62,7 @@ func TestLoadPrivateKey_wrongEncoding(t *testing.T) {
 	if err := os.Mkdir(testDir, 0755); err != nil {
 		panic("failed to create dir " + testDir + ":" + err.Error())
 	}
-	filename := testDir + "/wrong_encoding_sk"
+	filename := filepath.Join(testDir, "/wrong_encoding_sk")
 	file, err := os.Create(filename)
 	if err != nil {
 		panic("failed to create tmpfile " + filename + ":" + err.Error())
@@ -75,7 +75,7 @@ func TestLoadPrivateKey_wrongEncoding(t *testing.T) {
 	file.Close() // To flush test file content
 	_, _, err = csp.LoadPrivateKey(testDir)
 	assert.NotNil(t, err)
-	assert.EqualError(t, err, testDir+"/wrong_encoding_sk: wrong PEM encoding")
+	assert.EqualError(t, err, filepath.Join(testDir, "/wrong_encoding_sk")+": wrong PEM encoding")
 	cleanup(testDir)
 }
 
@@ -94,15 +94,15 @@ func TestGeneratePrivateKey(t *testing.T) {
 
 }
 
-func TestGetECPublicKey(t *testing.T) {
+func TestGetSM2PublicKey(t *testing.T) {
 
 	priv, _, err := csp.GeneratePrivateKey(testDir)
 	assert.NoError(t, err, "Failed to generate private key")
 
-	ecPubKey, err := csp.GetECPublicKey(priv)
+	sm2PubKey, err := csp.GetSM2PublicKey(priv)
 	assert.NoError(t, err, "Failed to get public key from private key")
-	assert.IsType(t, &ecdsa.PublicKey{}, ecPubKey,
-		"Failed to return an ecdsa.PublicKey")
+	assert.IsType(t, &sm2.PublicKey{}, sm2PubKey,
+		"Failed to return an sm2.PublicKey")
 
 	// force errors using mockKey
 	priv = &mockKey{
@@ -110,7 +110,7 @@ func TestGetECPublicKey(t *testing.T) {
 		bytesErr:  nil,
 		pubKey:    &mockKey{},
 	}
-	_, err = csp.GetECPublicKey(priv)
+	_, err = csp.GetSM2PublicKey(priv)
 	assert.Error(t, err, "Expected an error with a invalid pubKey bytes")
 	priv = &mockKey{
 		pubKeyErr: nil,
@@ -119,7 +119,7 @@ func TestGetECPublicKey(t *testing.T) {
 			bytesErr: errors.New("bytesErr"),
 		},
 	}
-	_, err = csp.GetECPublicKey(priv)
+	_, err = csp.GetSM2PublicKey(priv)
 	assert.EqualError(t, err, "bytesErr", "Expected bytesErr")
 	priv = &mockKey{
 		pubKeyErr: errors.New("pubKeyErr"),

@@ -143,16 +143,16 @@ func TestSign(t *testing.T) {
 	assert.True(t, valid)
 }
 
-func TestNewAES256EncrypterEntity(t *testing.T) {
+func TestNewSM4EncrypterEntity(t *testing.T) {
 	factory.InitFactories(nil)
 
-	_, err := NewAES256EncrypterEntity("ID", nil, []byte("0123456789012345"), nil)
+	_, err := NewSM4EncrypterEntity("ID", nil, []byte("0123456789012345"), nil)
 	assert.Error(t, err)
 
-	_, err = NewAES256EncrypterEntity("ID", factory.GetDefault(), []byte("0123456789012345"), nil)
+	_, err = NewSM4EncrypterEntity("ID", factory.GetDefault(), []byte("01234567890123456789012345678901"), nil)
 	assert.Error(t, err)
 
-	ent, err := NewAES256EncrypterEntity("ID", factory.GetDefault(), []byte("01234567890123456789012345678901"), nil)
+	ent, err := NewSM4EncrypterEntity("ID", factory.GetDefault(), []byte("0123456789012345"), nil)
 	assert.NoError(t, err)
 
 	m := []byte("MESSAGE")
@@ -165,25 +165,26 @@ func TestNewAES256EncrypterEntity(t *testing.T) {
 	assert.True(t, bytes.Equal(m1, m))
 }
 
-var sKey string = `-----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIH4Uv66F9kZMdOQxwNegkGm8c3AB3nGPOtxNKi6wb/ZooAoGCCqGSM49
-AwEHoUQDQgAEEPE+VLOh+e4NpwIjI/b/fKYHi4weU7r9OTEYPiAJiJBQY6TZnvF5
-oRMvwO4MCYxFtpIRO4UxIgcZBj4NCBxKqQ==
------END EC PRIVATE KEY-----`
+var sKey string = `-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBHkwdwIBAQQgT7Yat/U+TQvGPbea
+LZZsH+XCI1NhkXODDQWjTgJM9vugCgYIKoEcz1UBgi2hRANCAAQ+pwlrDprOQF6X
+KR8bXgutQdCUQE4uui6bGpZSs6qpqOZW4dEN2eWqDOfMARenplzF4HutisUaupYX
+yUrbOhTT
+-----END PRIVATE KEY-----`
 
-func TestNewAES256EncrypterECDSASignerEntity(t *testing.T) {
+func TestNewSM4EncrypterSM2SignerEntity(t *testing.T) {
 	factory.InitFactories(nil)
 
-	_, err := NewAES256EncrypterECDSASignerEntity("ID", nil, []byte("01234567890123456789012345678901"), []byte(sKey))
+	_, err := NewSM4EncrypterSM2SignerEntity("ID", nil, []byte("0123456789012345"), []byte(sKey))
 	assert.Error(t, err)
 
-	_, err = NewAES256EncrypterECDSASignerEntity("ID", factory.GetDefault(), []byte("barf"), []byte(sKey))
+	_, err = NewSM4EncrypterSM2SignerEntity("ID", factory.GetDefault(), []byte("barf"), []byte(sKey))
 	assert.Error(t, err)
 
-	_, err = NewAES256EncrypterECDSASignerEntity("ID", factory.GetDefault(), []byte("01234567890123456789012345678901"), []byte("barf"))
+	_, err = NewSM4EncrypterSM2SignerEntity("ID", factory.GetDefault(), []byte("0123456789012345"), []byte("barf"))
 	assert.Error(t, err)
 
-	ent, err := NewAES256EncrypterECDSASignerEntity("ID", factory.GetDefault(), []byte("01234567890123456789012345678901"), []byte(sKey))
+	ent, err := NewSM4EncrypterSM2SignerEntity("ID", factory.GetDefault(), []byte("0123456789012345"), []byte(sKey))
 	assert.NoError(t, err)
 
 	m := []byte("MESSAGE")
@@ -196,24 +197,25 @@ func TestNewAES256EncrypterECDSASignerEntity(t *testing.T) {
 	assert.True(t, v)
 }
 
-var sKey1 string = `-----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIBTmjidNauw8j2e8feT7PXBZhwUTeBb76mz4FHEKs6agoAoGCCqGSM49
-AwEHoUQDQgAEtgO7R2qvnqLym75fCDRNjS685g7Eeynbk5fx0Jp7iKuH/Cc4yEmV
-Fa9u0qqfXf5CybF/yhd9ZJ2l3tD+QgadAg==
------END EC PRIVATE KEY-----`
+var sKey1 string = `-----BEGIN PRIVATE KEY-----
+MIGTAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBHkwdwIBAQQgT7Yat/U+TQvGPbea
+LZZsH+XCI1NhkXODDQWjTgJM9vugCgYIKoEcz1UBgi2hRANCAAQ+pwlrDprOQF6X
+KR8bXgutQdCUQE4uui6bGpZSs6qpqOZW4dEN2eWqDOfMARenplzF4HutisUaupYX
+yUrbOhTT
+-----END PRIVATE KEY-----`
 var pKey1 string = `-----BEGIN PUBLIC KEY-----
-MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtgO7R2qvnqLym75fCDRNjS685g7E
-eynbk5fx0Jp7iKuH/Cc4yEmVFa9u0qqfXf5CybF/yhd9ZJ2l3tD+QgadAg==
+MFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAEPqcJaw6azkBelykfG14LrUHQlEBO
+LroumxqWUrOqqajmVuHRDdnlqgznzAEXp6ZcxeB7rYrFGrqWF8lK2zoU0w==
 -----END PUBLIC KEY-----`
 
-func TestNewECDSASignVerify(t *testing.T) {
+func TestNewSM2SignVerify(t *testing.T) {
 	factory.InitFactories(nil)
 
-	ePvt, err := NewECDSASignerEntity("SIGNER", factory.GetDefault(), []byte(sKey1))
+	ePvt, err := NewSM2SignerEntity("SIGNER", factory.GetDefault(), []byte(sKey1))
 	assert.NoError(t, err)
 	assert.NotNil(t, ePvt)
 
-	ePub, err := NewECDSAVerifierEntity("SIGNER", factory.GetDefault(), []byte(pKey1))
+	ePub, err := NewSM2VerifierEntity("SIGNER", factory.GetDefault(), []byte(pKey1))
 	assert.NoError(t, err)
 	assert.NotNil(t, ePub)
 

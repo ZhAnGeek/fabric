@@ -7,7 +7,6 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"math"
 
@@ -19,6 +18,7 @@ import (
 	ab "github.com/hyperledger/fabric/protos/orderer"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/pkg/errors"
+	tls "github.com/tjfoc/gmtls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
@@ -105,9 +105,9 @@ func CreateDeliverEnvelope(channelId string, creator []byte, signer SignerIdenti
 	var err error
 	// check for client certificate and compute SHA2-256 on certificate if present
 	if cert != nil && len(cert.Certificate) > 0 {
-		tlsCertHash, err = factory.GetDefault().Hash(cert.Certificate[0], &bccsp.SHA256Opts{})
+		tlsCertHash, err = factory.GetDefault().Hash(cert.Certificate[0], &bccsp.SM3Opts{})
 		if err != nil {
-			err = errors.New("failed to compute SHA256 on client certificate")
+			err = errors.New("failed to compute SM3 on client certificate")
 			logger.Errorf("%s", err)
 			return nil, err
 		}

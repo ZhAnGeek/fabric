@@ -580,7 +580,7 @@ func ComputeTxID(nonce, creator []byte) (string, error) {
 	// channel configuration
 	digest, err := factory.GetDefault().Hash(
 		append(nonce, creator...),
-		&bccsp.SHA256Opts{})
+		&bccsp.SM3Opts{})
 	if err != nil {
 		return "", err
 	}
@@ -636,5 +636,5 @@ func computeProposalBindingInternal(nonce, creator []byte, epoch uint64) ([]byte
 	// the binding computation
 	return factory.GetDefault().Hash(
 		append(append(nonce, creator...), epochBytes...),
-		&bccsp.SHA256Opts{})
+		&bccsp.SM3Opts{})
 }

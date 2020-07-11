@@ -7,11 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package signer
 
 import (
-	"crypto/ecdsa"
 	"path/filepath"
 	"testing"
 
-	"github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -30,8 +28,7 @@ func TestSigner(t *testing.T) {
 	sig, err := signer.Sign(msg)
 	assert.NoError(t, err)
 
-	r, s, err := utils.UnmarshalECDSASignature(sig)
-	ecdsa.Verify(&signer.key.PublicKey, util.ComputeSHA256(msg), r, s)
+	assert.True(t, signer.key.PublicKey.Verify(util.ComputeSM3(msg), sig))
 }
 
 func TestSignerBadConfig(t *testing.T) {

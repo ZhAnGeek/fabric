@@ -179,9 +179,9 @@ func ConstructMetadataDBName(dbName string) string {
 		// As the passed dbName is same as chain/channel name, truncate using chainNameAllowedLength
 		dbName = dbName[:chainNameAllowedLength]
 		// For metadataDB (i.e., chain/channel DB), the dbName contains <first 50 chars
-		// (i.e., chainNameAllowedLength) of chainName> + (SHA256 hash of actual chainName)
-		dbName = dbName + "(" + hex.EncodeToString(util.ComputeSHA256([]byte(untruncatedDBName))) + ")"
-		// 50 chars for dbName + 1 char for ( + 64 chars for sha256 + 1 char for ) = 116 chars
+		// (i.e., chainNameAllowedLength) of chainName> + (SM3 hash of actual chainName)
+		dbName = dbName + "(" + hex.EncodeToString(util.ComputeSM3([]byte(untruncatedDBName))) + ")"
+		// 50 chars for dbName + 1 char for ( + 64 chars for SM3 + 1 char for ) = 116 chars
 	}
 	return dbName + "_"
 }
@@ -206,7 +206,7 @@ func ConstructNamespaceDBName(chainName, namespace string) string {
 	if len(namespaceDBName) > maxLength {
 		// Compute the hash of untruncated namespaceDBName that needs to be appended to
 		// truncated namespaceDBName for maintaining uniqueness
-		hashOfNamespaceDBName := hex.EncodeToString(util.ComputeSHA256([]byte(chainName + "_" + namespace)))
+		hashOfNamespaceDBName := hex.EncodeToString(util.ComputeSM3([]byte(chainName + "_" + namespace)))
 
 		// As truncated namespaceDBName is of form 'chainName_escapedNamespace', both chainName
 		// and escapedNamespace need to be truncated to defined allowed length.

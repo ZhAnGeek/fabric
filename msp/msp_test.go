@@ -9,7 +9,6 @@ package msp
 
 import (
 	"crypto/ecdsa"
-	"crypto/x509"
 	"encoding/asn1"
 	"encoding/hex"
 	"encoding/pem"
@@ -29,6 +28,7 @@ import (
 	"github.com/hyperledger/fabric/core/config/configtest"
 	"github.com/hyperledger/fabric/protos/msp"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 var notACert = `-----BEGIN X509 CRL-----
@@ -331,7 +331,7 @@ func TestIsWellFormed(t *testing.T) {
 	assert.Contains(t, err.Error(), "for MSP SampleOrg has trailing bytes")
 
 	// Parse the certificate of the identity
-	cert, err := x509.ParseCertificate(bl.Bytes)
+	cert, err := sm2.ParseCertificate(bl.Bytes)
 	assert.NoError(t, err)
 	// Obtain the ECDSA signature
 	r, s, err := utils.UnmarshalECDSASignature(cert.Signature)
@@ -1315,14 +1315,14 @@ func TestMSPIdentityIdentifier(t *testing.T) {
 	assert.NoError(t, err)
 	bl, _ := pem.Decode(pems[0])
 	assert.NotNil(t, bl)
-	caCertFromFile, err := x509.ParseCertificate(bl.Bytes)
+	caCertFromFile, err := sm2.ParseCertificate(bl.Bytes)
 	assert.NoError(t, err)
 
 	pems, err = getPemMaterialFromDir("testdata/mspid/signcerts")
 	assert.NoError(t, err)
 	bl, _ = pem.Decode(pems[0])
 	assert.NotNil(t, bl)
-	certFromFile, err := x509.ParseCertificate(bl.Bytes)
+	certFromFile, err := sm2.ParseCertificate(bl.Bytes)
 	assert.NoError(t, err)
 	// Check that the certificates' raws are different, meaning that the identity has been sanitised
 	assert.NotEqual(t, certFromFile.Raw, id.(*signingidentity).cert)

@@ -7,7 +7,6 @@ SPDX-License-Identifier: Apache-2.0
 package ccprovider_test
 
 import (
-	"crypto/sha256"
 	"io/ioutil"
 	"os"
 	"path"
@@ -20,6 +19,7 @@ import (
 	"github.com/hyperledger/fabric/protos/peer"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm3"
 )
 
 func TestInstalledCCs(t *testing.T) {
@@ -142,14 +142,14 @@ func setupDirectoryStructure(t *testing.T) (string, map[string][]byte) {
 			},
 		}
 
-		codehash := sha256.New()
+		codehash := sm3.New()
 		codehash.Write(cds.CodePackage)
 
-		metahash := sha256.New()
+		metahash := sm3.New()
 		metahash.Write([]byte(name))
 		metahash.Write([]byte(ver))
 
-		hash := sha256.New()
+		hash := sm3.New()
 		hash.Write(codehash.Sum(nil))
 		hash.Write(metahash.Sum(nil))
 

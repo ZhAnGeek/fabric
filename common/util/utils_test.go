@@ -27,20 +27,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestComputeSHA256(t *testing.T) {
-	if bytes.Compare(ComputeSHA256([]byte("foobar")), ComputeSHA256([]byte("foobar"))) != 0 {
+func TestComputeSM3(t *testing.T) {
+	if bytes.Compare(ComputeSM3([]byte("foobar")), ComputeSM3([]byte("foobar"))) != 0 {
 		t.Fatalf("Expected hashes to match, but they did not match")
 	}
-	if bytes.Compare(ComputeSHA256([]byte("foobar1")), ComputeSHA256([]byte("foobar2"))) == 0 {
-		t.Fatalf("Expected hashes to be different, but they match")
-	}
-}
-
-func TestComputeSHA3256(t *testing.T) {
-	if bytes.Compare(ComputeSHA3256([]byte("foobar")), ComputeSHA3256([]byte("foobar"))) != 0 {
-		t.Fatalf("Expected hashes to match, but they did not match")
-	}
-	if bytes.Compare(ComputeSHA3256([]byte("foobar1")), ComputeSHA3256([]byte("foobar2"))) == 0 {
+	if bytes.Compare(ComputeSM3([]byte("foobar1")), ComputeSM3([]byte("foobar2"))) == 0 {
 		t.Fatalf("Expected hashed to be different, but they match")
 	}
 }
@@ -91,7 +82,7 @@ func TestGeneratIDfromTxSHAHash(t *testing.T) {
 }
 
 func TestGenerateIDWithAlg(t *testing.T) {
-	_, err := GenerateIDWithAlg("sha256", []byte{1, 1, 1, 1})
+	_, err := GenerateIDWithAlg("sm3", []byte{1, 1, 1, 1})
 	if err != nil {
 		t.Fatalf("Generator failure: %v", err)
 	}

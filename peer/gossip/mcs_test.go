@@ -62,7 +62,7 @@ func TestPKIidOfCert(t *testing.T) {
 	assert.NoError(t, err, "Failed getting validated identity from [% x]", []byte(peerIdentity))
 	idRaw := append([]byte(id.Mspid), id.IdBytes...)
 	assert.NoError(t, err, "Failed marshalling identity identifier [% x]: [%s]", peerIdentity, err)
-	digest, err := factory.GetDefault().Hash(idRaw, &bccsp.SHA256Opts{})
+	digest, err := factory.GetDefault().Hash(idRaw, &bccsp.SM3Opts{})
 	assert.NoError(t, err, "Failed computing digest of serialized identity [% x]", []byte(peerIdentity))
 	assert.Equal(t, digest, []byte(pkid), "PKID must be the SHA2-256 of peerIdentity")
 

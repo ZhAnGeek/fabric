@@ -68,6 +68,23 @@ func NewAES256EncrypterEntity(ID string, b bccsp.BCCSP, key, IV []byte) (*BCCSPE
 	return NewEncrypterEntity(ID, b, k, &bccsp.AESCBCPKCS7ModeOpts{IV: IV}, &bccsp.AESCBCPKCS7ModeOpts{})
 }
 
+// NewSM4EncrypterEntity returns an encrypter entity that is
+// capable of performing SM4 256 bit encryption using PKCS#7 padding.
+// Optionally, the IV can be provided in which case it is used during
+// the encryption; othjerwise, a random one is generated.
+func NewSM4EncrypterEntity(ID string, b bccsp.BCCSP, key, IV []byte) (*BCCSPEncrypterEntity, error) {
+	if b == nil {
+		return nil, errors.New("nil BCCSP")
+	}
+
+	k, err := b.KeyImport(key, &bccsp.SM4ImportKeyOpts{Temporary: true})
+	if err != nil {
+		return nil, errors.WithMessage(err, "bccspInst.KeyImport failed")
+	}
+
+	return NewEncrypterEntity(ID, b, k, &bccsp.SM4CBCPKCS7ModeOpts{IV: IV}, &bccsp.SM4CBCPKCS7ModeOpts{})
+}
+
 // NewEncrypterEntity returns an EncrypterEntity that is capable
 // of performing encryption using i) the supplied BCCSP instance;
 // ii) the supplied encryption key and iii) the supplied encryption
@@ -136,6 +153,44 @@ func NewECDSAVerifierEntity(ID string, b bccsp.BCCSP, signKeyBytes []byte) (*BCC
 	return NewSignerEntity(ID, b, signKey, nil, &bccsp.SHA256Opts{})
 }
 
+// NewSM2SignerEntity returns a signer entity that is capable of signing using ECDSA
+func NewSM2SignerEntity(ID string, b bccsp.BCCSP, signKeyBytes []byte) (*BCCSPSignerEntity, error) {
+	if b == nil {
+		return nil, errors.New("nil BCCSP")
+	}
+
+	bl, _ := pem.Decode(signKeyBytes)
+	if bl == nil {
+		return nil, errors.New("pem.Decode returns nil")
+	}
+
+	signKey, err := b.KeyImport(bl.Bytes, &bccsp.SM2PrivateKeyImportOpts{Temporary: true})
+	if err != nil {
+		return nil, errors.WithMessage(err, "bccspInst.KeyImport failed")
+	}
+
+	return NewSignerEntity(ID, b, signKey, nil, &bccsp.SM3Opts{})
+}
+
+// NewSM2VerifierEntity returns a verifier entity that is capable of verifying using ECDSA
+func NewSM2VerifierEntity(ID string, b bccsp.BCCSP, signKeyBytes []byte) (*BCCSPSignerEntity, error) {
+	if b == nil {
+		return nil, errors.New("nil BCCSP")
+	}
+
+	bl, _ := pem.Decode(signKeyBytes)
+	if bl == nil {
+		return nil, errors.New("pem.Decode returns nil")
+	}
+
+	signKey, err := b.KeyImport(bl.Bytes, &bccsp.SM2PKIXPublicKeyImportOpts{Temporary: true})
+	if err != nil {
+		return nil, errors.WithMessage(err, "bccspInst.KeyImport failed")
+	}
+
+	return NewSignerEntity(ID, b, signKey, nil, &bccsp.SM3Opts{})
+}
+
 // NewSignerEntity returns a SignerEntity
 func NewSignerEntity(ID string, bccsp bccsp.BCCSP, sKey bccsp.Key, sOpts bccsp.SignerOpts, hOpts bccsp.HashOpts) (*BCCSPSignerEntity, error) {
 	if ID == "" {
@@ -185,6 +240,32 @@ func NewAES256EncrypterECDSASignerEntity(ID string, b bccsp.BCCSP, encKeyBytes, 
 	}
 
 	return NewEncrypterSignerEntity(ID, b, encKey, signKey, &bccsp.AESCBCPKCS7ModeOpts{}, &bccsp.AESCBCPKCS7ModeOpts{}, nil, &bccsp.SHA256Opts{})
+}
+
+// NewSM4EncrypterSM2SignerEntity returns an encrypter entity that is
+// capable of performing SM4 256 bit encryption using PKCS#7 padding and
+// signing using SM2
+func NewSM4EncrypterSM2SignerEntity(ID string, b bccsp.BCCSP, encKeyBytes, signKeyBytes []byte) (*BCCSPEncrypterSignerEntity, error) {
+	if b == nil {
+		return nil, errors.New("nil BCCSP")
+	}
+
+	encKey, err := b.KeyImport(encKeyBytes, &bccsp.SM4ImportKeyOpts{Temporary: true})
+	if err != nil {
+		return nil, errors.WithMessage(err, "bccspInst.KeyImport failed")
+	}
+
+	bl, _ := pem.Decode(signKeyBytes)
+	if bl == nil {
+		return nil, errors.New("pem.Decode returns nil")
+	}
+
+	signKey, err := b.KeyImport(bl.Bytes, &bccsp.SM2PrivateKeyImportOpts{Temporary: true})
+	if err != nil {
+		return nil, errors.WithMessage(err, "bccspInst.KeyImport failed")
+	}
+
+	return NewEncrypterSignerEntity(ID, b, encKey, signKey, &bccsp.SM4CBCPKCS7ModeOpts{}, &bccsp.SM4CBCPKCS7ModeOpts{}, nil, &bccsp.SM3Opts{})
 }
 
 // NewEncrypterSignerEntity returns an EncrypterSignerEntity

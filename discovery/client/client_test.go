@@ -8,8 +8,6 @@ package discovery
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -37,8 +35,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
+	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -293,7 +293,7 @@ func createGRPCServer(t *testing.T) *comm.GRPCServer {
 func createConnector(t *testing.T, certificate tls.Certificate, targetPort int) func() (*grpc.ClientConn, error) {
 	caCert := loadFileOrPanic(filepath.Join("testdata", "server", "ca.pem"))
 	tlsConf := &tls.Config{
-		RootCAs:      x509.NewCertPool(),
+		RootCAs:      sm2.NewCertPool(),
 		Certificates: []tls.Certificate{certificate},
 	}
 	tlsConf.RootCAs.AppendCertsFromPEM(caCert)
@@ -384,7 +384,7 @@ func TestClient(t *testing.T) {
 	}
 	authInfo := &discovery.AuthInfo{
 		ClientIdentity:    []byte{1, 2, 3},
-		ClientTlsCertHash: util.ComputeSHA256(clientTLSCert.Certificate[0]),
+		ClientTlsCertHash: util.ComputeSM3(clientTLSCert.Certificate[0]),
 	}
 	cl := NewClient(connect, signer, signerCacheSize)
 

@@ -43,7 +43,7 @@ func initFactories(config *FactoryOpts) error {
 	}
 
 	if config.ProviderName == "" {
-		config.ProviderName = "SW"
+		config.ProviderName = "GM"
 	}
 
 	if config.SwOpts == nil {
@@ -52,6 +52,15 @@ func initFactories(config *FactoryOpts) error {
 
 	// Initialize factories map
 	bccspMap = make(map[string]bccsp.BCCSP)
+
+	// Guomi-Based BCCSP
+	if config.ProviderName == "GM" && config.SwOpts != nil {
+		f := &GMFactory{}
+		err := initBCCSP(f, config)
+		if err != nil {
+			return errors.Wrap(err, "Failed initializing GM.BCCSP")
+		}
+	}
 
 	// Software-Based BCCSP
 	if config.ProviderName == "SW" && config.SwOpts != nil {
@@ -95,6 +104,8 @@ func GetBCCSPFromOpts(config *FactoryOpts) (bccsp.BCCSP, error) {
 	switch config.ProviderName {
 	case "SW":
 		f = &SWFactory{}
+	case "GM":
+		f = &GMFactory{}
 	case "PKCS11":
 		f = &PKCS11Factory{}
 	case "PLUGIN":

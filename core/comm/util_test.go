@@ -8,9 +8,6 @@ package comm_test
 
 import (
 	"context"
-	"crypto/sha256"
-	"crypto/tls"
-	"crypto/x509"
 	"net"
 	"sync/atomic"
 	"testing"
@@ -22,6 +19,10 @@ import (
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
+	"github.com/tjfoc/gmsm/sm3"
+	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
@@ -39,19 +40,19 @@ func TestExtractCertificateHashFromContext(t *testing.T) {
 	ctx = peer.NewContext(context.Background(), p)
 	assert.Nil(t, comm.ExtractCertificateHashFromContext(ctx))
 
-	p.AuthInfo = credentials.TLSInfo{}
+	p.AuthInfo = gmcredentials.TLSInfo{}
 	ctx = peer.NewContext(context.Background(), p)
 	assert.Nil(t, comm.ExtractCertificateHashFromContext(ctx))
 
-	p.AuthInfo = credentials.TLSInfo{
+	p.AuthInfo = gmcredentials.TLSInfo{
 		State: tls.ConnectionState{
-			PeerCertificates: []*x509.Certificate{
+			PeerCertificates: []*sm2.Certificate{
 				{Raw: []byte{1, 2, 3}},
 			},
 		},
 	}
 	ctx = peer.NewContext(context.Background(), p)
-	h := sha256.New()
+	h := sm3.New()
 	h.Write([]byte{1, 2, 3})
 	assert.Equal(t, h.Sum(nil), comm.ExtractCertificateHashFromContext(ctx))
 }
@@ -126,7 +127,7 @@ func TestBindingInspector(t *testing.T) {
 
 	// Scenario IV: Client sends its TLS cert hash as needed, but doesn't use mutual TLS
 	cert, _ := tls.X509KeyPair([]byte(selfSignedCertPEM), []byte(selfSignedKeyPEM))
-	h := sha256.New()
+	h := sm3.New()
 	h.Write([]byte(cert.Certificate[0]))
 	chanHdr.TlsCertHash = h.Sum(nil)
 	ch, _ = proto.Marshal(chanHdr)
@@ -191,12 +192,12 @@ type inspection struct {
 
 func (is *inspectingServer) newInspection(t *testing.T) *inspection {
 	tlsConfig := &tls.Config{
-		RootCAs: x509.NewCertPool(),
+		RootCAs: sm2.NewCertPool(),
 	}
 	tlsConfig.RootCAs.AppendCertsFromPEM([]byte(selfSignedCertPEM))
 	return &inspection{
 		server:    is,
-		creds:     credentials.NewTLS(tlsConfig),
+		creds:     gmcredentials.NewTLS(tlsConfig),
 		t:         t,
 		tlsConfig: tlsConfig,
 	}
@@ -206,7 +207,7 @@ func (ins *inspection) withMutualTLS() *inspection {
 	cert, err := tls.X509KeyPair([]byte(selfSignedCertPEM), []byte(selfSignedKeyPEM))
 	assert.NoError(ins.t, err)
 	ins.tlsConfig.Certificates = []tls.Certificate{cert}
-	ins.creds = credentials.NewTLS(ins.tlsConfig)
+	ins.creds = gmcredentials.NewTLS(ins.tlsConfig)
 	return ins
 }
 

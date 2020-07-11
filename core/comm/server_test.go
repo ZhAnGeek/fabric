@@ -9,8 +9,6 @@ package comm_test
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"io"
@@ -26,9 +24,11 @@ import (
 	"github.com/hyperledger/fabric/core/comm"
 	testpb "github.com/hyperledger/fabric/core/comm/testdata/grpc"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
+	tls "github.com/tjfoc/gmtls"
+	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 )
@@ -36,20 +36,25 @@ import (
 // Embedded certificates for testing
 // The self-signed cert expires in 2028
 var selfSignedKeyPEM = `-----BEGIN EC PRIVATE KEY-----
-MHcCAQEEIMLemLh3+uDzww1pvqP6Xj2Z0Kc6yqf3RxyfTBNwRuuyoAoGCCqGSM49
-AwEHoUQDQgAEDB3l94vM7EqKr2L/vhqU5IsEub0rviqCAaWGiVAPp3orb/LJqFLS
-yo/k60rhUiir6iD4S4pb5TEb2ouWylQI3A==
+MIGTAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBHkwdwIBAQQgvaaYdC7MuAOWUzmD
+1dEYkL/89TWxtep2UrYInuDnbLmgCgYIKoEcz1UBgi2hRANCAATzhC9zFhEw/OGa
+1zw+w9XOcbglFGQHjTstiY7QRkXF60gwpgn44S/Cf/JG5QHB8S45vezISDzkANDC
+12BRV8g+
 -----END EC PRIVATE KEY-----
 `
 var selfSignedCertPEM = `-----BEGIN CERTIFICATE-----
-MIIBdDCCARqgAwIBAgIRAKCiW5r6W32jGUn+l9BORMAwCgYIKoZIzj0EAwIwEjEQ
-MA4GA1UEChMHQWNtZSBDbzAeFw0xODA4MjExMDI1MzJaFw0yODA4MTgxMDI1MzJa
-MBIxEDAOBgNVBAoTB0FjbWUgQ28wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAAQM
-HeX3i8zsSoqvYv++GpTkiwS5vSu+KoIBpYaJUA+neitv8smoUtLKj+TrSuFSKKvq
-IPhLilvlMRvai5bKVAjco1EwTzAOBgNVHQ8BAf8EBAMCBaAwEwYDVR0lBAwwCgYI
-KwYBBQUHAwEwDAYDVR0TAQH/BAIwADAaBgNVHREEEzARgglsb2NhbGhvc3SHBH8A
-AAEwCgYIKoZIzj0EAwIDSAAwRQIgOaYc3pdGf2j0uXRyvdBJq2PlK9FkgvsUjXOT
-bQ9fWRkCIQCr1FiRRzapgtrnttDn3O2fhLlbrw67kClzY8pIIN42Qw==
+MIICJzCCAc2gAwIBAgIQBIpWZ0L3m+znqNsdQwJrTDAKBggqgRzPVQGDdTBYMQsw
+CQYDVQQGEwJVUzETMBEGA1UECBMKQ2FsaWZvcm5pYTEWMBQGA1UEBxMNU2FuIEZy
+YW5jaXNjbzENMAsGA1UEChMET3JnMTENMAsGA1UEAxMET3JnMTAeFw0yMDA3MDcw
+NzE1NDlaFw0zMDA3MDUwNzE1NDlaMGUxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpD
+YWxpZm9ybmlhMRYwFAYDVQQHEw1TYW4gRnJhbmNpc2NvMRUwEwYDVQQKEwxPcmcx
+LXNlcnZlcjExEjAQBgNVBAMTCWxvY2FsaG9zdDBZMBMGByqGSM49AgEGCCqBHM9V
+AYItA0IABPOEL3MWETD84ZrXPD7D1c5xuCUUZAeNOy2JjtBGRcXrSDCmCfjhL8J/
+8kblAcHxLjm97MhIPOQA0MLXYFFXyD6jbDBqMA4GA1UdDwEB/wQEAwIFoDAdBgNV
+HSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDAYDVR0TAQH/BAIwADAPBgNVHSME
+CDAGgAQBAgMEMBoGA1UdEQQTMBGCCWxvY2FsaG9zdIcEfwAAATAKBggqgRzPVQGD
+dQNIADBFAiEAojRcEh5n+ug5rVZzvJBB7As5LgMrf+n20JXFrjKiX1MCIEl4qRfp
+38uUIlvvVrMcZLZy8EGBypY58PxOiDTPNyA5
 -----END CERTIFICATE-----
 `
 
@@ -231,8 +236,8 @@ type testOrg struct {
 }
 
 // return *X509.CertPool for the rootCA of the org
-func (org *testOrg) rootCertPool() *x509.CertPool {
-	certPool := x509.NewCertPool()
+func (org *testOrg) rootCertPool() *sm2.CertPool {
+	certPool := sm2.NewCertPool()
 	certPool.AppendCertsFromPEM(org.rootCA)
 	return certPool
 }
@@ -283,9 +288,9 @@ func (org *testOrg) trustedClients(serverRootCAs [][]byte) []*tls.Config {
 }
 
 // createCertPool creates an x509.CertPool from an array of PEM-encoded certificates
-func createCertPool(rootCAs [][]byte) (*x509.CertPool, error) {
+func createCertPool(rootCAs [][]byte) (*sm2.CertPool, error) {
 
-	certPool := x509.NewCertPool()
+	certPool := sm2.NewCertPool()
 	for _, rootCA := range rootCAs {
 		if !certPool.AppendCertsFromPEM(rootCA) {
 			return nil, errors.New("Failed to load root certificates")
@@ -418,9 +423,10 @@ func TestNewGRPCServerInvalidParameters(t *testing.T) {
 		"listen tcp: unknown port tcp/1BBB",
 		"listen tcp: address tcp/1BBB: unknown port",
 		"listen tcp: lookup tcp/1BBB: Servname not supported for ai_socktype",
+		"listen tcp: lookup tcp/1BBB: getaddrinfow: The specified class was not found.",
 	}
 
-	if assert.Error(t, err, fmt.Sprintf("[%s], [%s] [%s] or [%s] expected", msgs[0], msgs[1], msgs[2], msgs[3])) {
+	if assert.Error(t, err, fmt.Sprintf("[%s], [%s], [%s], [%s] or [%s] expected", msgs[0], msgs[1], msgs[2], msgs[3], msgs[4])) {
 		assert.Contains(t, msgs, err.Error())
 	}
 	if err != nil {
@@ -462,7 +468,7 @@ func TestNewGRPCServerInvalidParameters(t *testing.T) {
 	if err != nil {
 		t.Log(err.Error())
 	}
-	assert.Contains(t, err.Error(), "address already in use")
+	assert.Error(t, err)
 
 	// missing server Certificate
 	_, err = comm.NewGRPCServerFromListener(
@@ -704,7 +710,7 @@ func TestNewSecureGRPCServer(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	// create the client credentials
-	certPool := x509.NewCertPool()
+	certPool := sm2.NewCertPool()
 
 	if !certPool.AppendCertsFromPEM([]byte(selfSignedCertPEM)) {
 
@@ -762,7 +768,7 @@ func TestVerifyCertificateCallback(t *testing.T) {
 	serverKeyPair, err := ca.NewServerCertKeyPair("127.0.0.1")
 	assert.NoError(t, err)
 
-	verifyFunc := func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+	verifyFunc := func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error {
 		if bytes.Equal(rawCerts[0], authorizedClientKeyPair.TLSCert.Raw) {
 			return nil
 		}
@@ -773,7 +779,7 @@ func TestVerifyCertificateCallback(t *testing.T) {
 		cert, err := tls.X509KeyPair(clientKeyPair.Cert, clientKeyPair.Key)
 		tlsCfg := &tls.Config{
 			Certificates: []tls.Certificate{cert},
-			RootCAs:      x509.NewCertPool(),
+			RootCAs:      sm2.NewCertPool(),
 		}
 		tlsCfg.RootCAs.AppendCertsFromPEM(ca.CertBytes())
 
@@ -879,7 +885,7 @@ func TestWithSignedRootCertificates(t *testing.T) {
 	assert.NoError(t, err, "Expected client to connect with server cert only")
 
 	// now use the CA certificate
-	certPoolCA := x509.NewCertPool()
+	certPoolCA := sm2.NewCertPool()
 	if !certPoolCA.AppendCertsFromPEM(caPEMBlock) {
 		t.Fatal("Failed to append certificate to client credentials")
 	}
@@ -1415,7 +1421,7 @@ func TestUpdateTLSCert(t *testing.T) {
 	go srv.Start()
 	defer srv.Stop()
 
-	certPool := x509.NewCertPool()
+	certPool := sm2.NewCertPool()
 	certPool.AppendCertsFromPEM(caCert)
 
 	probeServer := func() error {

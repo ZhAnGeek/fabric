@@ -16,15 +16,13 @@ limitations under the License.
 package signer
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
 	"crypto/rand"
 	"errors"
 	"testing"
 
 	"github.com/hyperledger/fabric/bccsp/mocks"
-	"github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 func TestInitFailures(t *testing.T) {
@@ -50,9 +48,9 @@ func TestInitFailures(t *testing.T) {
 }
 
 func TestInit(t *testing.T) {
-	k, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	k, err := sm2.GenerateKey()
 	assert.NoError(t, err)
-	pkRaw, err := utils.PublicKeyToDER(&k.PublicKey)
+	pkRaw, err := sm2.MarshalSm2PublicKey(&k.PublicKey)
 	assert.NoError(t, err)
 
 	signer, err := New(&mocks.MockBCCSP{}, &mocks.MockKey{PK: &mocks.MockKey{BytesValue: pkRaw}})
@@ -60,10 +58,10 @@ func TestInit(t *testing.T) {
 	assert.NotNil(t, signer)
 
 	// Test public key
-	R, S, err := ecdsa.Sign(rand.Reader, k, []byte{0, 1, 2, 3})
+	sign, err := k.Sign(rand.Reader, []byte{0, 1, 2, 3}, nil)
 	assert.NoError(t, err)
 
-	assert.True(t, ecdsa.Verify(signer.Public().(*ecdsa.PublicKey), []byte{0, 1, 2, 3}, R, S))
+	assert.True(t, signer.Public().(*sm2.PublicKey).Verify([]byte{0, 1, 2, 3}, sign))
 }
 
 func TestPublic(t *testing.T) {

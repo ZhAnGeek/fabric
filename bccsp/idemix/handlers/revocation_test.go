@@ -6,15 +6,13 @@ SPDX-License-Identifier: Apache-2.0
 package handlers_test
 
 import (
-	"crypto/ecdsa"
 	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/sha256"
-	"crypto/x509"
 	"encoding/pem"
 	"math/big"
 
 	"github.com/hyperledger/fabric/bccsp/idemix/handlers"
+	"github.com/tjfoc/gmsm/sm2"
+	"github.com/tjfoc/gmsm/sm3"
 
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/idemix/handlers/mock"
@@ -43,24 +41,24 @@ var _ = Describe("Revocation", func() {
 		Context("and the underlying cryptographic algorithm succeed", func() {
 			var (
 				sk                  bccsp.Key
-				idemixRevocationKey *ecdsa.PrivateKey
+				idemixRevocationKey *sm2.PrivateKey
 				SKI                 []byte
 				pkBytes             []byte
 			)
 			BeforeEach(func() {
-				idemixRevocationKey = &ecdsa.PrivateKey{
-					PublicKey: ecdsa.PublicKey{
-						Curve: elliptic.P256(),
+				idemixRevocationKey = &sm2.PrivateKey{
+					PublicKey: sm2.PublicKey{
+						Curve: sm2.P256Sm2(),
 						X:     big.NewInt(1), Y: big.NewInt(1)},
 					D: big.NewInt(1)}
 
 				raw := elliptic.Marshal(idemixRevocationKey.Curve, idemixRevocationKey.PublicKey.X, idemixRevocationKey.PublicKey.Y)
-				hash := sha256.New()
+				hash := sm3.New()
 				hash.Write(raw)
 				SKI = hash.Sum(nil)
 
 				var err error
-				pkBytes, err = x509.MarshalPKIXPublicKey(&idemixRevocationKey.PublicKey)
+				pkBytes, err = sm2.MarshalPKIXPublicKey(&idemixRevocationKey.PublicKey)
 				Expect(err).NotTo(HaveOccurred())
 
 				fakeRevocation.NewKeyReturns(idemixRevocationKey, nil)
@@ -159,10 +157,10 @@ var _ = Describe("Revocation", func() {
 			)
 
 			BeforeEach(func() {
-				key, err := ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+				key, err := sm2.GenerateKey()
 				Expect(err).NotTo(HaveOccurred())
 
-				raw, err = x509.MarshalPKIXPublicKey(key.Public())
+				raw, err = sm2.MarshalPKIXPublicKey(&key.PublicKey)
 				Expect(err).NotTo(HaveOccurred())
 
 				pemBytes = pem.EncodeToMemory(
@@ -205,7 +203,7 @@ var _ = Describe("Revocation", func() {
 
 			It("returns an error", func() {
 				k, err := RevocationPublicKeyImporter.KeyImport([]byte("fake-raw"), nil)
-				Expect(err).To(MatchError("Failed to decode revocation ECDSA public key"))
+				Expect(err).To(MatchError("Failed to decode revocation SM2 public key"))
 				Expect(k).To(BeNil())
 			})
 

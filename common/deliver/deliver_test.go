@@ -11,7 +11,6 @@ import (
 	"io"
 	"time"
 
-	"crypto/x509"
 	"encoding/pem"
 
 	"github.com/golang/protobuf/proto"
@@ -30,6 +29,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 var (
@@ -45,7 +45,7 @@ var (
 var _ = Describe("Deliver", func() {
 	Describe("NewHandler", func() {
 		var fakeChainManager *mock.ChainManager
-		var cert *x509.Certificate
+		var cert *sm2.Certificate
 		var certBytes []byte
 		var serializedIdentity []byte
 
@@ -58,7 +58,7 @@ var _ = Describe("Deliver", func() {
 			certBytes = ca.CertBytes()
 
 			der, _ := pem.Decode(ca.CertBytes())
-			cert, err = x509.ParseCertificate(der.Bytes)
+			cert, err = sm2.ParseCertificate(der.Bytes)
 			Expect(err).NotTo(HaveOccurred())
 
 			serializedIdentity = utils.MarshalOrPanic(&msp.SerializedIdentity{IdBytes: certBytes})

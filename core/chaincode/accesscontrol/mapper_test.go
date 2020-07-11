@@ -26,7 +26,7 @@ func TestPurge(t *testing.T) {
 	m := newCertMapper(ca.NewClientCertKeyPair)
 	k, err := m.genCert("A")
 	assert.NoError(t, err)
-	hash, _ := factory.GetDefault().Hash(k.TLSCert.Raw, &bccsp.SHA256Opts{})
+	hash, _ := factory.GetDefault().Hash(k.TLSCert.Raw, &bccsp.SM3Opts{})
 	assert.Equal(t, "A", m.lookup(certHash(hash)))
 	time.Sleep(time.Second * 3)
 	assert.Empty(t, m.lookup(certHash(hash)))

@@ -566,13 +566,13 @@ func (dd *DataDigest) FormattedDigests() []string {
 	return digestsAsStrings(dd.Digests)
 }
 
-// Hash returns the SHA256 representation of the PvtDataDigest's bytes
+// Hash returns the SM3 representation of the PvtDataDigest's bytes
 func (dig *PvtDataDigest) Hash() (string, error) {
 	b, err := proto.Marshal(dig)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(util.ComputeSHA256(b)), nil
+	return hex.EncodeToString(util.ComputeSM3(b)), nil
 }
 
 // ToString returns a string representation of this RemotePvtDataResponse

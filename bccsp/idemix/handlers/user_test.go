@@ -6,14 +6,13 @@ SPDX-License-Identifier: Apache-2.0
 package handlers_test
 
 import (
-	"crypto/sha256"
-
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/idemix/handlers"
 	"github.com/hyperledger/fabric/bccsp/idemix/handlers/mock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmsm/sm3"
 )
 
 var _ = Describe("User", func() {
@@ -48,7 +47,7 @@ var _ = Describe("User", func() {
 				fakeIdemixKey.BytesReturns([]byte{1, 2, 3, 4}, nil)
 
 				fakeUser.NewKeyReturns(fakeIdemixKey, nil)
-				hash := sha256.New()
+				hash := sm3.New()
 				hash.Write([]byte{1, 2, 3, 4})
 				SKI = hash.Sum(nil)
 

@@ -26,6 +26,8 @@ import (
 	"hash"
 
 	"github.com/tjfoc/gmsm/sm2"
+	"github.com/tjfoc/gmsm/sm3"
+	"github.com/tjfoc/gmsm/sm4"
 
 	"golang.org/x/crypto/chacha20poly1305"
 )
@@ -88,32 +90,8 @@ type cipherSuite struct {
 }
 
 var cipherSuites = []*cipherSuite{
-	// Ciphersuite order is chosen so that ECDHE comes before plain RSA and
-	// AEADs are the top preference.
-	{TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305, 32, 0, 12, ecdheRSAKA, suiteECDHE | suiteTLS12, nil, nil, aeadChaCha20Poly1305},
-	{TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305, 32, 0, 12, ecdheECDSAKA, suiteECDHE | suiteECDSA | suiteTLS12, nil, nil, aeadChaCha20Poly1305},
-	{TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256, 16, 0, 4, ecdheRSAKA, suiteECDHE | suiteTLS12, nil, nil, aeadAESGCM},
-	{TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256, 16, 0, 4, ecdheECDSAKA, suiteECDHE | suiteECDSA | suiteTLS12, nil, nil, aeadAESGCM},
-	{TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, 32, 0, 4, ecdheRSAKA, suiteECDHE | suiteTLS12 | suiteSHA384, nil, nil, aeadAESGCM},
-	{TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384, 32, 0, 4, ecdheECDSAKA, suiteECDHE | suiteECDSA | suiteTLS12 | suiteSHA384, nil, nil, aeadAESGCM},
-	{TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, 16, 32, 16, ecdheRSAKA, suiteECDHE | suiteTLS12 | suiteDefaultOff, cipherAES, macSHA256, nil},
-	{TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA, 16, 20, 16, ecdheRSAKA, suiteECDHE, cipherAES, macSHA1, nil},
-	{TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, 16, 32, 16, ecdheECDSAKA, suiteECDHE | suiteECDSA | suiteTLS12 | suiteDefaultOff, cipherAES, macSHA256, nil},
-	{TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA, 16, 20, 16, ecdheECDSAKA, suiteECDHE | suiteECDSA, cipherAES, macSHA1, nil},
-	{TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA, 32, 20, 16, ecdheRSAKA, suiteECDHE, cipherAES, macSHA1, nil},
-	{TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA, 32, 20, 16, ecdheECDSAKA, suiteECDHE | suiteECDSA, cipherAES, macSHA1, nil},
-	{TLS_RSA_WITH_AES_128_GCM_SHA256, 16, 0, 4, rsaKA, suiteTLS12, nil, nil, aeadAESGCM},
-	{TLS_RSA_WITH_AES_256_GCM_SHA384, 32, 0, 4, rsaKA, suiteTLS12 | suiteSHA384, nil, nil, aeadAESGCM},
-	{TLS_RSA_WITH_AES_128_CBC_SHA256, 16, 32, 16, rsaKA, suiteTLS12 | suiteDefaultOff, cipherAES, macSHA256, nil},
-	{TLS_RSA_WITH_AES_128_CBC_SHA, 16, 20, 16, rsaKA, 0, cipherAES, macSHA1, nil},
-	{TLS_RSA_WITH_AES_256_CBC_SHA, 32, 20, 16, rsaKA, 0, cipherAES, macSHA1, nil},
-	{TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA, 24, 20, 8, ecdheRSAKA, suiteECDHE, cipher3DES, macSHA1, nil},
-	{TLS_RSA_WITH_3DES_EDE_CBC_SHA, 24, 20, 8, rsaKA, 0, cipher3DES, macSHA1, nil},
-
-	// RC4-based cipher suites are disabled by default.
-	{TLS_RSA_WITH_RC4_128_SHA, 16, 20, 0, rsaKA, suiteDefaultOff, cipherRC4, macSHA1, nil},
-	{TLS_ECDHE_RSA_WITH_RC4_128_SHA, 16, 20, 0, ecdheRSAKA, suiteECDHE | suiteDefaultOff, cipherRC4, macSHA1, nil},
-	{TLS_ECDHE_ECDSA_WITH_RC4_128_SHA, 16, 20, 0, ecdheECDSAKA, suiteECDHE | suiteECDSA | suiteDefaultOff, cipherRC4, macSHA1, nil},
+	{TLS_ECDHE_SM2_WITH_SM4_CBC_SM3, 16, 32, 16, ecdheECDSAKA, suiteECDHE | suiteTLS12 | suiteDefaultOff, cipherSM4, macSM3, nil},
+	{TLS_SM2_WITH_SM4_CBC_SM3, 16, 32, 16, sm2KA, suiteTLS12 | suiteDefaultOff, cipherSM4, macSM3, nil},
 }
 
 func cipherRC4(key, iv []byte, isRead bool) interface{} {
@@ -137,6 +115,14 @@ func cipherAES(key, iv []byte, isRead bool) interface{} {
 	return cipher.NewCBCEncrypter(block, iv)
 }
 
+func cipherSM4(key, iv []byte, isRead bool) interface{} {
+	block, _ := sm4.NewCipher(key)
+	if isRead {
+		return cipher.NewCBCDecrypter(block, iv)
+	}
+	return cipher.NewCBCEncrypter(block, iv)
+}
+
 // macSHA1 returns a macFunction for the given protocol version.
 func macSHA1(version uint16, key []byte) macFunction {
 	if version == VersionSSL30 {
@@ -154,6 +140,10 @@ func macSHA1(version uint16, key []byte) macFunction {
 // so the given version is ignored.
 func macSHA256(version uint16, key []byte) macFunction {
 	return tls10MAC{hmac.New(sha256.New, key)}
+}
+
+func macSM3(version uint16, key []byte) macFunction {
+	return tls10MAC{hmac.New(sm3.New, key)}
 }
 
 type macFunction interface {
@@ -339,8 +329,8 @@ func (s tls10MAC) MAC(digestBuf, seq, header, data, extra []byte) []byte {
 	return res
 }
 
-func rsaKA(version uint16) keyAgreement {
-	return rsaKeyAgreement{}
+func sm2KA(version uint16) keyAgreement {
+	return sm2KeyAgreement{}
 }
 
 func ecdheECDSAKA(version uint16) keyAgreement {
@@ -378,28 +368,8 @@ func mutualCipherSuite(have []uint16, want uint16) *cipherSuite {
 //
 // Taken from http://www.iana.org/assignments/tls-parameters/tls-parameters.xml
 const (
-	TLS_RSA_WITH_RC4_128_SHA                uint16 = 0x0005
-	TLS_RSA_WITH_3DES_EDE_CBC_SHA           uint16 = 0x000a
-	TLS_RSA_WITH_AES_128_CBC_SHA            uint16 = 0x002f
-	TLS_RSA_WITH_AES_256_CBC_SHA            uint16 = 0x0035
-	TLS_RSA_WITH_AES_128_CBC_SHA256         uint16 = 0x003c
-	TLS_RSA_WITH_AES_128_GCM_SHA256         uint16 = 0x009c
-	TLS_RSA_WITH_AES_256_GCM_SHA384         uint16 = 0x009d
-	TLS_ECDHE_ECDSA_WITH_RC4_128_SHA        uint16 = 0xc007
-	TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA    uint16 = 0xc009
-	TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA    uint16 = 0xc00a
-	TLS_ECDHE_RSA_WITH_RC4_128_SHA          uint16 = 0xc011
-	TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA     uint16 = 0xc012
-	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA      uint16 = 0xc013
-	TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA      uint16 = 0xc014
-	TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256 uint16 = 0xc023
-	TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256   uint16 = 0xc027
-	TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256   uint16 = 0xc02f
-	TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256 uint16 = 0xc02b
-	TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384   uint16 = 0xc030
-	TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384 uint16 = 0xc02c
-	TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305    uint16 = 0xcca8
-	TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305  uint16 = 0xcca9
+	TLS_ECDHE_SM2_WITH_SM4_CBC_SM3 uint16 = 0xe011
+	TLS_SM2_WITH_SM4_CBC_SM3       uint16 = 0xe013
 
 	// TLS_FALLBACK_SCSV isn't a standard cipher suite but an indicator
 	// that the client is doing version fallback. See

@@ -246,6 +246,7 @@ Curves:
 			hs.rsaSignOk = true
 		case *sm2.PublicKey:
 			hs.ecdsaOk = true
+			hs.rsaSignOk = true
 		default:
 			c.sendAlert(alertInternalError)
 			return false, fmt.Errorf("tls: unsupported signing key type (%T)", priv.Public())

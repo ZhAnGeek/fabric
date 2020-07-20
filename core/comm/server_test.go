@@ -1464,32 +1464,11 @@ func TestCipherSuites(t *testing.T) {
 
 	// default cipher suites
 	defaultCipherSuites := []uint16{
-		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-		tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-		tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_SM2_WITH_SM4_CBC_SM3,
+		tls.TLS_SM2_WITH_SM4_CBC_SM3,
 	}
 	// the other cipher suites supported by Go
-	otherCipherSuites := []uint16{
-		tls.TLS_RSA_WITH_RC4_128_SHA,
-		tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
-		tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
-		tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-		tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-		tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-	}
+	otherCipherSuites := []uint16{}
 	certPEM, err := ioutil.ReadFile(filepath.Join("testdata", "certs",
 		"Org1-server1-cert.pem"))
 	assert.NoError(t, err)

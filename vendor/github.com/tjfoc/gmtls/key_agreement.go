@@ -35,15 +35,15 @@ import (
 var errClientKeyExchange = errors.New("tls: invalid ClientKeyExchange message")
 var errServerKeyExchange = errors.New("tls: invalid ServerKeyExchange message")
 
-// rsaKeyAgreement implements the standard TLS key agreement where the client
+// sm2KeyAgreement implements the standard TLS key agreement where the client
 // encrypts the pre-master secret to the server's public key.
-type rsaKeyAgreement struct{}
+type sm2KeyAgreement struct{}
 
-func (ka rsaKeyAgreement) generateServerKeyExchange(config *Config, cert *Certificate, clientHello *clientHelloMsg, hello *serverHelloMsg) (*serverKeyExchangeMsg, error) {
+func (ka sm2KeyAgreement) generateServerKeyExchange(config *Config, cert *Certificate, clientHello *clientHelloMsg, hello *serverHelloMsg) (*serverKeyExchangeMsg, error) {
 	return nil, nil
 }
 
-func (ka rsaKeyAgreement) processClientKeyExchange(config *Config, cert *Certificate, ckx *clientKeyExchangeMsg, version uint16) ([]byte, error) {
+func (ka sm2KeyAgreement) processClientKeyExchange(config *Config, cert *Certificate, ckx *clientKeyExchangeMsg, version uint16) ([]byte, error) {
 	if len(ckx.ciphertext) < 2 {
 		return nil, errClientKeyExchange
 	}
@@ -74,11 +74,11 @@ func (ka rsaKeyAgreement) processClientKeyExchange(config *Config, cert *Certifi
 	return preMasterSecret, nil
 }
 
-func (ka rsaKeyAgreement) processServerKeyExchange(config *Config, clientHello *clientHelloMsg, serverHello *serverHelloMsg, cert *sm2.Certificate, skx *serverKeyExchangeMsg) error {
+func (ka sm2KeyAgreement) processServerKeyExchange(config *Config, clientHello *clientHelloMsg, serverHello *serverHelloMsg, cert *sm2.Certificate, skx *serverKeyExchangeMsg) error {
 	return errors.New("tls: unexpected ServerKeyExchange")
 }
 
-func (ka rsaKeyAgreement) generateClientKeyExchange(config *Config, clientHello *clientHelloMsg, cert *sm2.Certificate) ([]byte, *clientKeyExchangeMsg, error) {
+func (ka sm2KeyAgreement) generateClientKeyExchange(config *Config, clientHello *clientHelloMsg, cert *sm2.Certificate) ([]byte, *clientKeyExchangeMsg, error) {
 	preMasterSecret := make([]byte, 48)
 	preMasterSecret[0] = byte(clientHello.vers >> 8)
 	preMasterSecret[1] = byte(clientHello.vers)
@@ -87,7 +87,7 @@ func (ka rsaKeyAgreement) generateClientKeyExchange(config *Config, clientHello 
 		return nil, nil, err
 	}
 
-	encrypted, err := rsa.EncryptPKCS1v15(config.rand(), cert.PublicKey.(*rsa.PublicKey), preMasterSecret)
+	encrypted, err := sm2.Encrypt(cert.PublicKey.(*sm2.PublicKey), preMasterSecret)
 	if err != nil {
 		return nil, nil, err
 	}

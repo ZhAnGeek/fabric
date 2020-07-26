@@ -20,17 +20,19 @@ SPDX-License-Identifier: Apache-2.0
 package peer
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"path/filepath"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/core/comm"
 	"github.com/hyperledger/fabric/core/config"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 )
 
 // Is the configuration cached?
@@ -203,8 +205,13 @@ func GetServerRootCAs() ([][]byte, error) {
 
 // GetClientCertificate returns the TLS certificate to use for gRPC client
 // connections
-func GetClientCertificate() (tls.Certificate, error) {
-	cert := tls.Certificate{}
+func GetClientCertificate() (interface{}, error) {
+	var tempCert interface{}
+	if factory.GetDefault().GetProviderName() == "SW" {
+		tempCert = tls.Certificate{}
+	} else {
+		tempCert = gmtls.Certificate{}
+	}
 
 	keyPath := viper.GetString("peer.tls.clientKey.file")
 	certPath := viper.GetString("peer.tls.clientCert.file")
@@ -212,7 +219,7 @@ func GetClientCertificate() (tls.Certificate, error) {
 	if keyPath != "" || certPath != "" {
 		// need both keyPath and certPath to be set
 		if keyPath == "" || certPath == "" {
-			return cert, errors.New("peer.tls.clientKey.file and " +
+			return tempCert, errors.New("peer.tls.clientKey.file and " +
 				"peer.tls.clientCert.file must both be set or must both be empty")
 		}
 		keyPath = config.GetPath("peer.tls.clientKey.file")
@@ -226,13 +233,13 @@ func GetClientCertificate() (tls.Certificate, error) {
 		if keyPath != "" || certPath != "" {
 			// need both keyPath and certPath to be set
 			if keyPath == "" || certPath == "" {
-				return cert, errors.New("peer.tls.key.file and " +
+				return tempCert, errors.New("peer.tls.key.file and " +
 					"peer.tls.cert.file must both be set or must both be empty")
 			}
 			keyPath = config.GetPath("peer.tls.key.file")
 			certPath = config.GetPath("peer.tls.cert.file")
 		} else {
-			return cert, errors.New("must set either " +
+			return tempCert, errors.New("must set either " +
 				"[peer.tls.key.file and peer.tls.cert.file] or " +
 				"[peer.tls.clientKey.file and peer.tls.clientCert.file]" +
 				"when peer.tls.clientAuthEnabled is set to true")
@@ -241,20 +248,29 @@ func GetClientCertificate() (tls.Certificate, error) {
 	// get the keypair from the file system
 	clientKey, err := ioutil.ReadFile(keyPath)
 	if err != nil {
-		return cert, errors.WithMessage(err,
+		return tempCert, errors.WithMessage(err,
 			"error loading client TLS key")
 	}
 	clientCert, err := ioutil.ReadFile(certPath)
 	if err != nil {
-		return cert, errors.WithMessage(err,
+		return tempCert, errors.WithMessage(err,
 			"error loading client TLS certificate")
 	}
-	cert, err = tls.X509KeyPair(clientCert, clientKey)
-	if err != nil {
-		return cert, errors.WithMessage(err,
-			"error parsing client TLS key pair")
+	if factory.GetDefault().GetProviderName() == "SW" {
+		cert, err := tls.X509KeyPair(clientCert, clientKey)
+		if err != nil {
+			return cert, errors.WithMessage(err,
+				"error parsing client TLS key pair")
+		}
+		return cert, nil
+	} else {
+		cert, err := gmtls.X509KeyPair(clientCert, clientKey)
+		if err != nil {
+			return cert, errors.WithMessage(err,
+				"error parsing client TLS key pair")
+		}
+		return cert, nil
 	}
-	return cert, nil
 }
 
 type addressOverride struct {

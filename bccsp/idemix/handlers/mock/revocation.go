@@ -21,10 +21,10 @@ type Revocation struct {
 		result1 *sm2.PrivateKey
 		result2 error
 	}
-	SignStub        func(key *sm2.PrivateKey, unrevokedHandles [][]byte, epoch int, alg bccsp.RevocationAlgorithm) ([]byte, error)
+	SignStub        func(key interface{}, unrevokedHandles [][]byte, epoch int, alg bccsp.RevocationAlgorithm) ([]byte, error)
 	signMutex       sync.RWMutex
 	signArgsForCall []struct {
-		key              *sm2.PrivateKey
+		key              interface{}
 		unrevokedHandles [][]byte
 		epoch            int
 		alg              bccsp.RevocationAlgorithm
@@ -37,10 +37,10 @@ type Revocation struct {
 		result1 []byte
 		result2 error
 	}
-	VerifyStub        func(pk *sm2.PublicKey, cri []byte, epoch int, alg bccsp.RevocationAlgorithm) error
+	VerifyStub        func(pk interface{}, cri []byte, epoch int, alg bccsp.RevocationAlgorithm) error
 	verifyMutex       sync.RWMutex
 	verifyArgsForCall []struct {
-		pk    *sm2.PublicKey
+		pk    interface{}
 		cri   []byte
 		epoch int
 		alg   bccsp.RevocationAlgorithm
@@ -55,7 +55,7 @@ type Revocation struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *Revocation) NewKey() (*sm2.PrivateKey, error) {
+func (fake *Revocation) NewKey() (interface{}, error) {
 	fake.newKeyMutex.Lock()
 	ret, specificReturn := fake.newKeyReturnsOnCall[len(fake.newKeyArgsForCall)]
 	fake.newKeyArgsForCall = append(fake.newKeyArgsForCall, struct{}{})
@@ -98,7 +98,7 @@ func (fake *Revocation) NewKeyReturnsOnCall(i int, result1 *sm2.PrivateKey, resu
 	}{result1, result2}
 }
 
-func (fake *Revocation) Sign(key *sm2.PrivateKey, unrevokedHandles [][]byte, epoch int, alg bccsp.RevocationAlgorithm) ([]byte, error) {
+func (fake *Revocation) Sign(key interface{}, unrevokedHandles [][]byte, epoch int, alg bccsp.RevocationAlgorithm) ([]byte, error) {
 	var unrevokedHandlesCopy [][]byte
 	if unrevokedHandles != nil {
 		unrevokedHandlesCopy = make([][]byte, len(unrevokedHandles))
@@ -107,7 +107,7 @@ func (fake *Revocation) Sign(key *sm2.PrivateKey, unrevokedHandles [][]byte, epo
 	fake.signMutex.Lock()
 	ret, specificReturn := fake.signReturnsOnCall[len(fake.signArgsForCall)]
 	fake.signArgsForCall = append(fake.signArgsForCall, struct {
-		key              *sm2.PrivateKey
+		key              interface{}
 		unrevokedHandles [][]byte
 		epoch            int
 		alg              bccsp.RevocationAlgorithm
@@ -129,7 +129,7 @@ func (fake *Revocation) SignCallCount() int {
 	return len(fake.signArgsForCall)
 }
 
-func (fake *Revocation) SignArgsForCall(i int) (*sm2.PrivateKey, [][]byte, int, bccsp.RevocationAlgorithm) {
+func (fake *Revocation) SignArgsForCall(i int) (interface{}, [][]byte, int, bccsp.RevocationAlgorithm) {
 	fake.signMutex.RLock()
 	defer fake.signMutex.RUnlock()
 	return fake.signArgsForCall[i].key, fake.signArgsForCall[i].unrevokedHandles, fake.signArgsForCall[i].epoch, fake.signArgsForCall[i].alg
@@ -157,7 +157,7 @@ func (fake *Revocation) SignReturnsOnCall(i int, result1 []byte, result2 error) 
 	}{result1, result2}
 }
 
-func (fake *Revocation) Verify(pk *sm2.PublicKey, cri []byte, epoch int, alg bccsp.RevocationAlgorithm) error {
+func (fake *Revocation) Verify(pk interface{}, cri []byte, epoch int, alg bccsp.RevocationAlgorithm) error {
 	var criCopy []byte
 	if cri != nil {
 		criCopy = make([]byte, len(cri))
@@ -166,7 +166,7 @@ func (fake *Revocation) Verify(pk *sm2.PublicKey, cri []byte, epoch int, alg bcc
 	fake.verifyMutex.Lock()
 	ret, specificReturn := fake.verifyReturnsOnCall[len(fake.verifyArgsForCall)]
 	fake.verifyArgsForCall = append(fake.verifyArgsForCall, struct {
-		pk    *sm2.PublicKey
+		pk    interface{}
 		cri   []byte
 		epoch int
 		alg   bccsp.RevocationAlgorithm
@@ -188,7 +188,7 @@ func (fake *Revocation) VerifyCallCount() int {
 	return len(fake.verifyArgsForCall)
 }
 
-func (fake *Revocation) VerifyArgsForCall(i int) (*sm2.PublicKey, []byte, int, bccsp.RevocationAlgorithm) {
+func (fake *Revocation) VerifyArgsForCall(i int) (interface{}, []byte, int, bccsp.RevocationAlgorithm) {
 	fake.verifyMutex.RLock()
 	defer fake.verifyMutex.RUnlock()
 	return fake.verifyArgsForCall[i].pk, fake.verifyArgsForCall[i].cri, fake.verifyArgsForCall[i].epoch, fake.verifyArgsForCall[i].alg

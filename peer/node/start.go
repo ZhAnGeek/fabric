@@ -8,6 +8,7 @@ package node
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
@@ -17,7 +18,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/tjfoc/gmtls"
+
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/cauthdsl"
 	ccdef "github.com/hyperledger/fabric/common/chaincode"
 	"github.com/hyperledger/fabric/common/crypto"
@@ -318,10 +322,19 @@ func serve(args []string) error {
 	serverEndorser := endorser.NewEndorserServer(privDataDist, endorserSupport, pr, metricsProvider)
 
 	expirationLogger := flogging.MustGetLogger("certmonitor")
+	var cert [][]byte
+	clientCertificate := comm.GetCredentialSupport().GetClientCertificate()
+	if clientCertificate != nil {
+		if factory.GetDefault().GetProviderName() == "SW" {
+			cert = clientCertificate.(tls.Certificate).Certificate
+		} else {
+			cert = clientCertificate.(gmtls.Certificate).Certificate
+		}
+	}
 	crypto.TrackExpiration(
 		serverConfig.SecOpts.UseTLS,
 		serverConfig.SecOpts.Certificate,
-		comm.GetCredentialSupport().GetClientCertificate().Certificate,
+		cert,
 		serializedIdentity,
 		expirationLogger.Warnf, // This can be used to piggyback a metric event in the future
 		time.Now(),

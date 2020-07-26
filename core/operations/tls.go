@@ -11,6 +11,7 @@ import (
 	"crypto/x509"
 	"io/ioutil"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/core/comm"
 )
 
@@ -38,10 +39,18 @@ func (t TLS) Config() (*tls.Config, error) {
 			}
 			caCertPool.AppendCertsFromPEM(caPem)
 		}
-		tlsConfig = &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			CipherSuites: comm.DefaultTLSCipherSuites,
-			ClientCAs:    caCertPool,
+		if factory.GetDefault().GetProviderName() == "SW" {
+			tlsConfig = &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				CipherSuites: comm.DefaultTLSCipherSuites,
+				ClientCAs:    caCertPool,
+			}
+		} else {
+			tlsConfig = &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				CipherSuites: comm.DefaultGMTLSCipherSuites,
+				ClientCAs:    caCertPool,
+			}
 		}
 		if t.ClientCertRequired {
 			tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert

@@ -156,7 +156,7 @@ func TestDERtoPEM(t *testing.T) {
 	assert.NoError(t, err)
 	keyPair, err := ca.NewServerCertKeyPair("localhost")
 	assert.NoError(t, err)
-	assert.Equal(t, cluster.DERtoPEM(keyPair.TLSCert.Raw), string(keyPair.Cert))
+	assert.Equal(t, cluster.DERtoPEM(keyPair.TLSCert.(*sm2.Certificate).Raw), string(keyPair.Cert))
 }
 
 func TestStandardDialer(t *testing.T) {

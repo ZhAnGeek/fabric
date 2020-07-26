@@ -7,19 +7,23 @@ SPDX-License-Identifier: Apache-2.0
 package util
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"strconv"
 	"time"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/crypto/tlsgen"
 	"github.com/hyperledger/fabric/core/comm"
 	"github.com/hyperledger/fabric/gossip/api"
 	"github.com/hyperledger/fabric/gossip/common"
 	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
-	credentials "github.com/tjfoc/gmtls/gmcredentials"
+	"github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // CA that generates TLS key-pairs
@@ -46,42 +50,83 @@ func CreateGRPCLayer() (port int, gRPCServer *comm.GRPCServer, certs *common.TLS
 		panic(err)
 	}
 
-	tlsServerCert, err := tls.X509KeyPair(serverKeyPair.Cert, serverKeyPair.Key)
-	if err != nil {
-		panic(err)
+	var srvConfig comm.ServerConfig
+	if factory.GetDefault().GetProviderName() == "SW" {
+		tlsServerCert, err := tls.X509KeyPair(serverKeyPair.Cert, serverKeyPair.Key)
+		if err != nil {
+			panic(err)
+		}
+		tlsClientCert, err := tls.X509KeyPair(clientKeyPair.Cert, clientKeyPair.Key)
+		if err != nil {
+			panic(err)
+		}
+
+		tlsConf := &tls.Config{
+			Certificates: []tls.Certificate{tlsClientCert},
+			ClientAuth:   tls.RequestClientCert,
+			RootCAs:      x509.NewCertPool(),
+		}
+
+		tlsConf.RootCAs.AppendCertsFromPEM(ca.CertBytes())
+
+		ta := credentials.NewTLS(tlsConf)
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(ta))
+
+		secureDialOpts = func() []grpc.DialOption {
+			return dialOpts
+		}
+
+		certs = &common.TLSCertificates{}
+		certs.TLSServerCert.Store(&tlsServerCert)
+		certs.TLSClientCert.Store(&tlsClientCert)
+
+		srvConfig = comm.ServerConfig{
+			ConnectionTimeout: time.Second,
+			SecOpts: &comm.SecureOptions{
+				Key:         serverKeyPair.Key,
+				Certificate: serverKeyPair.Cert,
+				UseTLS:      true,
+			},
+		}
+	} else {
+		tlsServerCert, err := gmtls.X509KeyPair(serverKeyPair.Cert, serverKeyPair.Key)
+		if err != nil {
+			panic(err)
+		}
+		tlsClientCert, err := gmtls.X509KeyPair(clientKeyPair.Cert, clientKeyPair.Key)
+		if err != nil {
+			panic(err)
+		}
+
+		tlsConf := &gmtls.Config{
+			Certificates: []gmtls.Certificate{tlsClientCert},
+			ClientAuth:   gmtls.RequestClientCert,
+			RootCAs:      sm2.NewCertPool(),
+		}
+
+		tlsConf.RootCAs.AppendCertsFromPEM(ca.CertBytes())
+
+		ta := gmcredentials.NewTLS(tlsConf)
+		dialOpts = append(dialOpts, grpc.WithTransportCredentials(ta))
+
+		secureDialOpts = func() []grpc.DialOption {
+			return dialOpts
+		}
+
+		certs = &common.TLSCertificates{}
+		certs.TLSServerCert.Store(&tlsServerCert)
+		certs.TLSClientCert.Store(&tlsClientCert)
+
+		srvConfig = comm.ServerConfig{
+			ConnectionTimeout: time.Second,
+			SecOpts: &comm.SecureOptions{
+				Key:         serverKeyPair.Key,
+				Certificate: serverKeyPair.Cert,
+				UseTLS:      true,
+			},
+		}
 	}
-	tlsClientCert, err := tls.X509KeyPair(clientKeyPair.Cert, clientKeyPair.Key)
-	if err != nil {
-		panic(err)
-	}
 
-	tlsConf := &tls.Config{
-		Certificates: []tls.Certificate{tlsClientCert},
-		ClientAuth:   tls.RequestClientCert,
-		RootCAs:      sm2.NewCertPool(),
-	}
-
-	tlsConf.RootCAs.AppendCertsFromPEM(ca.CertBytes())
-
-	ta := credentials.NewTLS(tlsConf)
-	dialOpts = append(dialOpts, grpc.WithTransportCredentials(ta))
-
-	secureDialOpts = func() []grpc.DialOption {
-		return dialOpts
-	}
-
-	certs = &common.TLSCertificates{}
-	certs.TLSServerCert.Store(&tlsServerCert)
-	certs.TLSClientCert.Store(&tlsClientCert)
-
-	srvConfig := comm.ServerConfig{
-		ConnectionTimeout: time.Second,
-		SecOpts: &comm.SecureOptions{
-			Key:         serverKeyPair.Key,
-			Certificate: serverKeyPair.Cert,
-			UseTLS:      true,
-		},
-	}
 	gRPCServer, err = comm.NewGRPCServer("127.0.0.1:", srvConfig)
 	if err != nil {
 		panic(err)

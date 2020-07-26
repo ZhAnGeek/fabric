@@ -27,7 +27,8 @@ const (
 )
 
 var (
-	hashOpts = &bccsp.SM3Opts{}
+	hashOpts   = &bccsp.SHA256Opts{}
+	gmHashOpts = &bccsp.SM3Opts{}
 )
 
 // RangeQueryResultsHelper helps preparing range query results for phantom items detection during validation.
@@ -126,7 +127,12 @@ func (helper *RangeQueryResultsHelper) processPendingResults() error {
 		return err
 	}
 	helper.pendingResults = nil
-	hash, err := bccspfactory.GetDefault().Hash(b, hashOpts)
+	var hash []byte
+	if bccspfactory.GetDefault().GetProviderName() == "SW" {
+		hash, err = bccspfactory.GetDefault().Hash(b, hashOpts)
+	} else {
+		hash, err = bccspfactory.GetDefault().Hash(b, gmHashOpts)
+	}
 	if err != nil {
 		return err
 	}
@@ -247,7 +253,11 @@ func computeCombinedHash(hashes []Hash) (Hash, error) {
 	for _, h := range hashes {
 		combinedHash = append(combinedHash, h...)
 	}
-	return bccspfactory.GetDefault().Hash(combinedHash, hashOpts)
+	if bccspfactory.GetDefault().GetProviderName() == "SW" {
+		return bccspfactory.GetDefault().Hash(combinedHash, hashOpts)
+	} else {
+		return bccspfactory.GetDefault().Hash(combinedHash, gmHashOpts)
+	}
 }
 
 func hashesToBytes(hashes []Hash) [][]byte {

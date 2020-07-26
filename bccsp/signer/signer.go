@@ -57,17 +57,18 @@ func New(csp bccsp.BCCSP, key bccsp.Key) (crypto.Signer, error) {
 		return nil, errors.Wrap(err, "failed marshalling public key")
 	}
 
-	sm2pk, err := sm2.ParseSm2PublicKey(raw)
+	pk, err := utils.DERToPublicKey(raw)
 	if err == nil {
-		return &bccspCryptoSigner{csp, key, sm2pk}, nil
+		return &bccspCryptoSigner{csp, key, pk}, nil
+
 	}
 
-	pk, err := utils.DERToPublicKey(raw)
+	sm2pk, err := sm2.ParseSm2PublicKey(raw)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed marshalling der to public key")
 	}
 
-	return &bccspCryptoSigner{csp, key, pk}, nil
+	return &bccspCryptoSigner{csp, key, sm2pk}, nil
 }
 
 // Public returns the public key corresponding to the opaque,

@@ -17,8 +17,10 @@ limitations under the License.
 package deliverclient
 
 import (
+	"crypto/tls"
 	"math"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/localmsp"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/comm"
@@ -26,6 +28,7 @@ import (
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/orderer"
 	"github.com/hyperledger/fabric/protos/utils"
+	"github.com/tjfoc/gmtls"
 )
 
 type blocksRequester struct {
@@ -58,7 +61,11 @@ func (b *blocksRequester) RequestBlocks(ledgerInfoProvider blocksprovider.Ledger
 
 func (b *blocksRequester) getTLSCertHash() []byte {
 	if b.tls {
-		return util.ComputeSM3(comm.GetCredentialSupport().GetClientCertificate().Certificate[0])
+		if factory.GetDefault().GetProviderName() == "SW" {
+			return util.ComputeSHA256(comm.GetCredentialSupport().GetClientCertificate().(tls.Certificate).Certificate[0])
+		} else {
+			return util.ComputeSM3(comm.GetCredentialSupport().GetClientCertificate().(gmtls.Certificate).Certificate[0])
+		}
 	}
 	return nil
 }

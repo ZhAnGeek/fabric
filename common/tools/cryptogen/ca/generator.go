@@ -24,6 +24,7 @@ import (
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/tjfoc/gmsm/sm2"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/bccsp/gm"
 	"github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/hyperledger/fabric/common/tools/cryptogen/csp"
@@ -38,7 +39,7 @@ type CA struct {
 	StreetAddress      string
 	PostalCode         string
 	Signer             crypto.Signer
-	SignCert           *sm2.Certificate
+	SignCert           interface{}
 	SignKey            bccsp.Key
 }
 
@@ -51,49 +52,96 @@ func NewCA(baseDir, org, name, country, province, locality, orgUnit, streetAddre
 
 	err := os.MkdirAll(baseDir, 0755)
 	if err == nil {
-		priv, _, err := csp.GeneratePrivateKey(baseDir)
-		response = err
-		if err == nil {
-			// get public signing certificate
-			sm2PubKey, err := csp.GetSM2PublicKey(priv)
+		if factory.GetDefault().GetProviderName() == "SW" {
+			priv, signer, err := csp.GeneratePrivateKey(baseDir)
 			response = err
 			if err == nil {
-				template := x509Template()
-				//this is a CA
-				template.IsCA = true
-				template.KeyUsage |= x509.KeyUsageDigitalSignature |
-					x509.KeyUsageKeyEncipherment | x509.KeyUsageCertSign |
-					x509.KeyUsageCRLSign
-				template.ExtKeyUsage = []x509.ExtKeyUsage{
-					x509.ExtKeyUsageClientAuth,
-					x509.ExtKeyUsageServerAuth,
-				}
-
-				//set the organization for the subject
-				subject := subjectTemplateAdditional(country, province, locality, orgUnit, streetAddress, postalCode)
-				subject.Organization = []string{org}
-				subject.CommonName = name
-
-				template.Subject = subject
-				template.SubjectKeyId = priv.SKI()
-
-				sm2Cert := gm.ParseX509Certificate2Sm2(&template)
-				sm2Cert.PublicKey = sm2PubKey
-				x509Cert, err := genCertificateSM2(baseDir, name, sm2Cert, sm2Cert, sm2PubKey, priv)
-
+				// get public signing certificate
+				ecPubKey, err := csp.GetECPublicKey(priv)
 				response = err
 				if err == nil {
-					ca = &CA{
-						Name: name,
-						// Signer:             signer,
-						Country:            country,
-						Province:           province,
-						Locality:           locality,
-						OrganizationalUnit: orgUnit,
-						StreetAddress:      streetAddress,
-						PostalCode:         postalCode,
-						SignCert:           x509Cert,
-						SignKey:            priv,
+					template := x509Template()
+					//this is a CA
+					template.IsCA = true
+					template.KeyUsage |= x509.KeyUsageDigitalSignature |
+						x509.KeyUsageKeyEncipherment | x509.KeyUsageCertSign |
+						x509.KeyUsageCRLSign
+					template.ExtKeyUsage = []x509.ExtKeyUsage{
+						x509.ExtKeyUsageClientAuth,
+						x509.ExtKeyUsageServerAuth,
+					}
+
+					//set the organization for the subject
+					subject := subjectTemplateAdditional(country, province, locality, orgUnit, streetAddress, postalCode)
+					subject.Organization = []string{org}
+					subject.CommonName = name
+
+					template.Subject = subject
+					template.SubjectKeyId = priv.SKI()
+
+					x509Cert, err := genCertificateECDSA(baseDir, name, &template, &template,
+						ecPubKey, signer)
+					response = err
+					if err == nil {
+						ca = &CA{
+							Name:               name,
+							Signer:             signer,
+							SignCert:           x509Cert,
+							Country:            country,
+							Province:           province,
+							Locality:           locality,
+							OrganizationalUnit: orgUnit,
+							StreetAddress:      streetAddress,
+							PostalCode:         postalCode,
+						}
+					}
+				}
+			}
+		} else {
+			priv, _, err := csp.GeneratePrivateKey(baseDir)
+			response = err
+			if err == nil {
+				// get public signing certificate
+				sm2PubKey, err := csp.GetSM2PublicKey(priv)
+				response = err
+				if err == nil {
+					template := x509Template()
+					//this is a CA
+					template.IsCA = true
+					template.KeyUsage |= x509.KeyUsageDigitalSignature |
+						x509.KeyUsageKeyEncipherment | x509.KeyUsageCertSign |
+						x509.KeyUsageCRLSign
+					template.ExtKeyUsage = []x509.ExtKeyUsage{
+						x509.ExtKeyUsageClientAuth,
+						x509.ExtKeyUsageServerAuth,
+					}
+
+					//set the organization for the subject
+					subject := subjectTemplateAdditional(country, province, locality, orgUnit, streetAddress, postalCode)
+					subject.Organization = []string{org}
+					subject.CommonName = name
+
+					template.Subject = subject
+					template.SubjectKeyId = priv.SKI()
+
+					sm2Cert := gm.ParseX509Certificate2Sm2(&template)
+					sm2Cert.PublicKey = sm2PubKey
+					x509Cert, err := genCertificateSM2(baseDir, name, sm2Cert, sm2Cert, sm2PubKey, priv)
+
+					response = err
+					if err == nil {
+						ca = &CA{
+							Name: name,
+							// Signer:             signer,
+							Country:            country,
+							Province:           province,
+							Locality:           locality,
+							OrganizationalUnit: orgUnit,
+							StreetAddress:      streetAddress,
+							PostalCode:         postalCode,
+							SignCert:           x509Cert,
+							SignKey:            priv,
+						}
 					}
 				}
 			}
@@ -104,8 +152,8 @@ func NewCA(baseDir, org, name, country, province, locality, orgUnit, streetAddre
 
 // SignCertificate creates a signed certificate based on a built-in template
 // and saves it in baseDir/name
-func (ca *CA) SignCertificate(baseDir, name string, ous, sans []string, pub *sm2.PublicKey,
-	ku x509.KeyUsage, eku []x509.ExtKeyUsage) (*sm2.Certificate, error) {
+func (ca *CA) SignCertificate(baseDir, name string, ous, sans []string, pub interface{},
+	ku x509.KeyUsage, eku []x509.ExtKeyUsage) (interface{}, error) {
 
 	template := x509Template()
 	template.KeyUsage = ku
@@ -127,18 +175,30 @@ func (ca *CA) SignCertificate(baseDir, name string, ous, sans []string, pub *sm2
 			template.DNSNames = append(template.DNSNames, san)
 		}
 	}
-	if ca.SignCert == nil || ca.SignCert.PublicKey == nil {
-		return nil, fmt.Errorf("Sign cert can not be nil")
+
+	if factory.GetDefault().GetProviderName() == "SW" {
+		cert, err := genCertificateECDSA(baseDir, name, &template, ca.SignCert.(*x509.Certificate),
+			pub.(*ecdsa.PublicKey), ca.Signer)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return cert, nil
+	} else {
+		if ca.SignCert == nil || ca.SignCert.(*sm2.Certificate).PublicKey == nil {
+			return nil, fmt.Errorf("Sign cert can not be nil")
+		}
+
+		sm2Tpl := gm.ParseX509Certificate2Sm2(&template)
+		cert, err := genCertificateSM2(baseDir, name, sm2Tpl, ca.SignCert.(*sm2.Certificate), pub.(*sm2.PublicKey), ca.SignKey)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return cert, nil
 	}
-
-	sm2Tpl := gm.ParseX509Certificate2Sm2(&template)
-	cert, err := genCertificateSM2(baseDir, name, sm2Tpl, ca.SignCert, pub, ca.SignKey)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return cert, nil
 }
 
 // default template for X509 subject

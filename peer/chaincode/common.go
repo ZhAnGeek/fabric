@@ -8,6 +8,7 @@ package chaincode
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/cauthdsl"
 	"github.com/hyperledger/fabric/common/localmsp"
 	"github.com/hyperledger/fabric/common/util"
@@ -33,7 +35,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 )
 
 // checkSpec to see if chaincode resides within current package capture for language.
@@ -335,7 +337,7 @@ func validatePeerConnectionParameters(cmdName string) error {
 type ChaincodeCmdFactory struct {
 	EndorserClients []pb.EndorserClient
 	DeliverClients  []api.PeerDeliverClient
-	Certificate     tls.Certificate
+	Certificate     interface{}
 	Signer          msp.SigningIdentity
 	BroadcastClient common.BroadcastClient
 }
@@ -429,7 +431,7 @@ func ChaincodeInvokeOrQuery(
 	txID string,
 	invoke bool,
 	signer msp.SigningIdentity,
-	certificate tls.Certificate,
+	certificate interface{},
 	endorserClients []pb.EndorserClient,
 	deliverClients []api.PeerDeliverClient,
 	bc common.BroadcastClient,
@@ -533,7 +535,7 @@ func ChaincodeInvokeOrQuery(
 // occurs will be set
 type deliverGroup struct {
 	Clients     []*deliverClient
-	Certificate tls.Certificate
+	Certificate interface{}
 	ChannelID   string
 	TxID        string
 	mutex       sync.Mutex
@@ -549,7 +551,7 @@ type deliverClient struct {
 	Address    string
 }
 
-func newDeliverGroup(deliverClients []api.PeerDeliverClient, peerAddresses []string, certificate tls.Certificate, channelID string, txid string) *deliverGroup {
+func newDeliverGroup(deliverClients []api.PeerDeliverClient, peerAddresses []string, certificate interface{}, channelID string, txid string) *deliverGroup {
 	clients := make([]*deliverClient, len(deliverClients))
 	for i, client := range deliverClients {
 		dc := &deliverClient{
@@ -693,11 +695,17 @@ func (dg *deliverGroup) setError(err error) {
 	dg.mutex.Unlock()
 }
 
-func createDeliverEnvelope(channelID string, certificate tls.Certificate) *pcommon.Envelope {
+func createDeliverEnvelope(channelID string, certificate interface{}) *pcommon.Envelope {
 	var tlsCertHash []byte
 	// check for client certificate and create hash if present
-	if len(certificate.Certificate) > 0 {
-		tlsCertHash = util.ComputeSM3(certificate.Certificate[0])
+	if factory.GetDefault().GetProviderName() == "SW" {
+		if certificate != nil && len(certificate.(tls.Certificate).Certificate) > 0 {
+			tlsCertHash = util.ComputeSHA256(certificate.(tls.Certificate).Certificate[0])
+		}
+	} else {
+		if certificate != nil && len(certificate.(gmtls.Certificate).Certificate) > 0 {
+			tlsCertHash = util.ComputeSM3(certificate.(gmtls.Certificate).Certificate[0])
+		}
 	}
 
 	start := &ab.SeekPosition{

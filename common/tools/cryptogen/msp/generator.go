@@ -6,6 +6,7 @@ SPDX-License-Identifier: Apache-2.0
 package msp
 
 import (
+	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
@@ -71,8 +72,14 @@ func GenerateLocalMSP(baseDir, name string, sans []string, signCA *ca.CA,
 		return err
 	}
 
+	var ecPubKey *ecdsa.PublicKey
+	var sm2PubKey *sm2.PublicKey
 	// get public key
-	sm2PubKey, err := csp.GetSM2PublicKey(priv)
+	if factory.GetDefault().GetProviderName() == "SW" {
+		ecPubKey, err = csp.GetECPublicKey(priv)
+	} else {
+		sm2PubKey, err = csp.GetSM2PublicKey(priv)
+	}
 	if err != nil {
 		return err
 	}
@@ -81,8 +88,14 @@ func GenerateLocalMSP(baseDir, name string, sans []string, signCA *ca.CA,
 	if nodeOUs {
 		ous = []string{nodeOUMap[nodeType]}
 	}
-	cert, err := signCA.SignCertificate(filepath.Join(mspDir, "signcerts"),
-		name, ous, nil, sm2PubKey, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
+	var cert interface{}
+	if factory.GetDefault().GetProviderName() == "SW" {
+		cert, err = signCA.SignCertificate(filepath.Join(mspDir, "signcerts"),
+			name, ous, nil, ecPubKey, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
+	} else {
+		cert, err = signCA.SignCertificate(filepath.Join(mspDir, "signcerts"),
+			name, ous, nil, sm2PubKey, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
+	}
 	if err != nil {
 		return err
 	}
@@ -129,17 +142,32 @@ func GenerateLocalMSP(baseDir, name string, sans []string, signCA *ca.CA,
 	if err != nil {
 		return err
 	}
-	// get public key
-	tlsPubKey, err := csp.GetSM2PublicKey(tlsPrivKey)
-	if err != nil {
-		return err
-	}
-	// generate X509 certificate using TLS CA
-	_, err = tlsCA.SignCertificate(filepath.Join(tlsDir),
-		name, nil, sans, tlsPubKey, x509.KeyUsageDigitalSignature|x509.KeyUsageKeyEncipherment,
-		[]x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth})
-	if err != nil {
-		return err
+	if factory.GetDefault().GetProviderName() == "SW" {
+		// get public key
+		tlsPubKey, err := csp.GetECPublicKey(tlsPrivKey)
+		if err != nil {
+			return err
+		}
+		// generate X509 certificate using TLS CA
+		_, err = tlsCA.SignCertificate(filepath.Join(tlsDir),
+			name, nil, sans, tlsPubKey, x509.KeyUsageDigitalSignature|x509.KeyUsageKeyEncipherment,
+			[]x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth})
+		if err != nil {
+			return err
+		}
+	} else {
+		// get public key
+		tlsPubKey, err := csp.GetSM2PublicKey(tlsPrivKey)
+		if err != nil {
+			return err
+		}
+		// generate X509 certificate using TLS CA
+		_, err = tlsCA.SignCertificate(filepath.Join(tlsDir),
+			name, nil, sans, tlsPubKey, x509.KeyUsageDigitalSignature|x509.KeyUsageKeyEncipherment,
+			[]x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth})
+		if err != nil {
+			return err
+		}
 	}
 	err = x509Export(filepath.Join(tlsDir, "ca.crt"), tlsCA.SignCert)
 	if err != nil {
@@ -196,17 +224,29 @@ func GenerateVerifyingMSP(baseDir string, signCA *ca.CA, tlsCA *ca.CA, nodeOUs b
 		return nil
 	}
 
-	factory.InitFactories(nil)
 	bcsp := factory.GetDefault()
-	priv, err := bcsp.KeyGen(&bccsp.SM2KeyGenOpts{Temporary: true})
-	sm2PubKey, err := csp.GetSM2PublicKey(priv)
-	if err != nil {
-		return err
-	}
-	_, err = signCA.SignCertificate(filepath.Join(baseDir, "admincerts"), signCA.Name,
-		nil, nil, sm2PubKey, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
-	if err != nil {
-		return err
+	if bcsp.GetProviderName() == "SW" {
+		priv, err := bcsp.KeyGen(&bccsp.ECDSAP256KeyGenOpts{Temporary: true})
+		ecPubKey, err := csp.GetECPublicKey(priv)
+		if err != nil {
+			return err
+		}
+		_, err = signCA.SignCertificate(filepath.Join(baseDir, "admincerts"), signCA.Name,
+			nil, nil, ecPubKey, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
+		if err != nil {
+			return err
+		}
+	} else {
+		priv, err := bcsp.KeyGen(&bccsp.SM2KeyGenOpts{Temporary: true})
+		sm2PubKey, err := csp.GetSM2PublicKey(priv)
+		if err != nil {
+			return err
+		}
+		_, err = signCA.SignCertificate(filepath.Join(baseDir, "admincerts"), signCA.Name,
+			nil, nil, sm2PubKey, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -239,8 +279,12 @@ func x509Filename(name string) string {
 	return name + "-cert.pem"
 }
 
-func x509Export(path string, cert *sm2.Certificate) error {
-	return pemExport(path, "CERTIFICATE", cert.Raw)
+func x509Export(path string, cert interface{}) error {
+	if factory.GetDefault().GetProviderName() == "SW" {
+		return pemExport(path, "CERTIFICATE", cert.(*x509.Certificate).Raw)
+	} else {
+		return pemExport(path, "CERTIFICATE", cert.(*sm2.Certificate).Raw)
+	}
 }
 
 func keyExport(keystore, output string, key bccsp.Key) error {

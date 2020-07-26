@@ -213,7 +213,7 @@ func doPrintOrg(t *genesisconfig.TopLevel, printOrg string) error {
 }
 
 func main() {
-	var outputBlock, outputChannelCreateTx, channelCreateTxBaseProfile, profile, configPath, channelID, inspectBlock, inspectChannelCreateTx, outputAnchorPeersUpdate, asOrg, printOrg string
+	var outputBlock, outputChannelCreateTx, channelCreateTxBaseProfile, profile, configPath, channelID, inspectBlock, inspectChannelCreateTx, outputAnchorPeersUpdate, asOrg, printOrg, bccsp string
 
 	flag.StringVar(&outputBlock, "outputBlock", "", "The path to write the genesis block to (if set)")
 	flag.StringVar(&channelID, "channelID", "", "The channel ID to use in the configtx")
@@ -226,6 +226,7 @@ func main() {
 	flag.StringVar(&outputAnchorPeersUpdate, "outputAnchorPeersUpdate", "", "Creates an config update to update an anchor peer (works only with the default channel creation, and only for the first update)")
 	flag.StringVar(&asOrg, "asOrg", "", "Performs the config generation as a particular organization (by name), only including values in the write set that org (likely) has privilege to set")
 	flag.StringVar(&printOrg, "printOrg", "", "Prints the definition of an organization as JSON. (useful for adding an org to a channel manually)")
+	flag.StringVar(&bccsp, "bccsp", "", "Blockchain cryptographic service provider name")
 
 	version := flag.Bool("version", false, "Show version information")
 
@@ -262,7 +263,23 @@ func main() {
 	}()
 
 	logger.Info("Loading configuration")
-	factory.InitFactories(nil)
+	if bccsp == "SW" {
+		factory.InitFactories(&factory.FactoryOpts{
+			ProviderName: "SW",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SHA2",
+				SecLevel:   256,
+			},
+		})
+	} else {
+		factory.InitFactories(&factory.FactoryOpts{
+			ProviderName: "GM",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SM3",
+				SecLevel:   256,
+			},
+		})
+	}
 	var profileConfig *genesisconfig.Profile
 	if outputBlock != "" || outputChannelCreateTx != "" || outputAnchorPeersUpdate != "" {
 		if configPath != "" {

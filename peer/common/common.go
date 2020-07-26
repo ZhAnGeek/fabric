@@ -31,7 +31,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	tls "github.com/tjfoc/gmtls"
 )
 
 // UndefinedParamValue defines what undefined parameters in the command line will initialise to
@@ -75,7 +74,7 @@ var (
 		endorserClient pb.EndorserClient) ([]string, error)
 
 	// GetCertificateFnc is a function that returns the client TLS certificate
-	GetCertificateFnc func() (tls.Certificate, error)
+	GetCertificateFnc func() (interface{}, error)
 )
 
 type commonClient struct {

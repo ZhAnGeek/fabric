@@ -21,6 +21,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric-lib-go/healthz"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/channelconfig"
 	"github.com/hyperledger/fabric/common/crypto"
 	"github.com/hyperledger/fabric/common/flogging"
@@ -393,22 +394,43 @@ func configureClusterListener(conf *localconfig.TopLevel, generalConf comm.Serve
 		clientRootCAs = append(clientRootCAs, rootCACert)
 	}
 
-	serverConf := comm.ServerConfig{
-		StreamInterceptors: generalConf.StreamInterceptors,
-		UnaryInterceptors:  generalConf.UnaryInterceptors,
-		ConnectionTimeout:  generalConf.ConnectionTimeout,
-		ServerStatsHandler: generalConf.ServerStatsHandler,
-		Logger:             generalConf.Logger,
-		KaOpts:             generalConf.KaOpts,
-		SecOpts: &comm.SecureOptions{
-			TimeShift:         conf.General.Cluster.TLSHandshakeTimeShift,
-			CipherSuites:      comm.DefaultTLSCipherSuites,
-			ClientRootCAs:     clientRootCAs,
-			RequireClientCert: true,
-			Certificate:       cert,
-			UseTLS:            true,
-			Key:               key,
-		},
+	var serverConf comm.ServerConfig
+	if factory.GetDefault().GetProviderName() == "SW" {
+		serverConf = comm.ServerConfig{
+			StreamInterceptors: generalConf.StreamInterceptors,
+			UnaryInterceptors:  generalConf.UnaryInterceptors,
+			ConnectionTimeout:  generalConf.ConnectionTimeout,
+			ServerStatsHandler: generalConf.ServerStatsHandler,
+			Logger:             generalConf.Logger,
+			KaOpts:             generalConf.KaOpts,
+			SecOpts: &comm.SecureOptions{
+				TimeShift:         conf.General.Cluster.TLSHandshakeTimeShift,
+				CipherSuites:      comm.DefaultTLSCipherSuites,
+				ClientRootCAs:     clientRootCAs,
+				RequireClientCert: true,
+				Certificate:       cert,
+				UseTLS:            true,
+				Key:               key,
+			},
+		}
+	} else {
+		serverConf = comm.ServerConfig{
+			StreamInterceptors: generalConf.StreamInterceptors,
+			UnaryInterceptors:  generalConf.UnaryInterceptors,
+			ConnectionTimeout:  generalConf.ConnectionTimeout,
+			ServerStatsHandler: generalConf.ServerStatsHandler,
+			Logger:             generalConf.Logger,
+			KaOpts:             generalConf.KaOpts,
+			SecOpts: &comm.SecureOptions{
+				TimeShift:         conf.General.Cluster.TLSHandshakeTimeShift,
+				CipherSuites:      comm.DefaultGMTLSCipherSuites,
+				ClientRootCAs:     clientRootCAs,
+				RequireClientCert: true,
+				Certificate:       cert,
+				UseTLS:            true,
+				Key:               key,
+			},
+		}
 	}
 
 	srv, err := comm.NewGRPCServer(bindAddr, serverConf)
@@ -453,14 +475,26 @@ func initializeClusterClientConfig(conf *localconfig.TopLevel) comm.ClientConfig
 		serverRootCAs = append(serverRootCAs, rootCACert)
 	}
 
-	cc.SecOpts = &comm.SecureOptions{
-		TimeShift:         conf.General.Cluster.TLSHandshakeTimeShift,
-		RequireClientCert: true,
-		CipherSuites:      comm.DefaultTLSCipherSuites,
-		ServerRootCAs:     serverRootCAs,
-		Certificate:       certBytes,
-		Key:               keyBytes,
-		UseTLS:            true,
+	if factory.GetDefault().GetProviderName() == "SW" {
+		cc.SecOpts = &comm.SecureOptions{
+			TimeShift:         conf.General.Cluster.TLSHandshakeTimeShift,
+			RequireClientCert: true,
+			CipherSuites:      comm.DefaultTLSCipherSuites,
+			ServerRootCAs:     serverRootCAs,
+			Certificate:       certBytes,
+			Key:               keyBytes,
+			UseTLS:            true,
+		}
+	} else {
+		cc.SecOpts = &comm.SecureOptions{
+			TimeShift:         conf.General.Cluster.TLSHandshakeTimeShift,
+			RequireClientCert: true,
+			CipherSuites:      comm.DefaultGMTLSCipherSuites,
+			ServerRootCAs:     serverRootCAs,
+			Certificate:       certBytes,
+			Key:               keyBytes,
+			UseTLS:            true,
+		}
 	}
 
 	return cc

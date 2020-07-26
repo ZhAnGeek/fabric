@@ -11,7 +11,6 @@ import (
 	"github.com/hyperledger/fabric/bccsp"
 	cryptolib "github.com/hyperledger/fabric/idemix"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 // Revocation encapsulates the idemix algorithms for revocation
@@ -19,12 +18,12 @@ type Revocation struct {
 }
 
 // NewKey generate a new revocation key-pair.
-func (*Revocation) NewKey() (*sm2.PrivateKey, error) {
+func (*Revocation) NewKey() (interface{}, error) {
 	return cryptolib.GenerateLongTermRevocationKey()
 }
 
 // Sign generates a new CRI with the respect to the passed unrevoked handles, epoch, and revocation algorithm.
-func (*Revocation) Sign(key *sm2.PrivateKey, unrevokedHandles [][]byte, epoch int, alg bccsp.RevocationAlgorithm) (res []byte, err error) {
+func (*Revocation) Sign(key interface{}, unrevokedHandles [][]byte, epoch int, alg bccsp.RevocationAlgorithm) (res []byte, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			res = nil
@@ -46,7 +45,7 @@ func (*Revocation) Sign(key *sm2.PrivateKey, unrevokedHandles [][]byte, epoch in
 
 // Verify checks that the passed serialised CRI (criRaw) is valid with the respect to the passed revocation public key,
 // epoch, and revocation algorithm.
-func (*Revocation) Verify(pk *sm2.PublicKey, criRaw []byte, epoch int, alg bccsp.RevocationAlgorithm) (err error) {
+func (*Revocation) Verify(pk interface{}, criRaw []byte, epoch int, alg bccsp.RevocationAlgorithm) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.Errorf("failure [%s]", r)

@@ -27,20 +27,34 @@ func LoadPrivateKey(keystorePath string) (bccsp.Key, crypto.Signer, error) {
 	var err error
 	var priv bccsp.Key
 	var s crypto.Signer
+	var csp bccsp.BCCSP
 
-	opts := &factory.FactoryOpts{
-		ProviderName: "GM",
-		SwOpts: &factory.SwOpts{
-			HashFamily: "SM3",
-			SecLevel:   256,
+	if factory.GetDefault().GetProviderName() == "SW" {
+		csp, err = factory.GetBCCSPFromOpts(&factory.FactoryOpts{
+			ProviderName: "SW",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SHA2",
+				SecLevel:   256,
 
-			FileKeystore: &factory.FileKeystoreOpts{
-				KeyStorePath: keystorePath,
+				FileKeystore: &factory.FileKeystoreOpts{
+					KeyStorePath: keystorePath,
+				},
 			},
-		},
+		})
+	} else {
+		csp, err = factory.GetBCCSPFromOpts(&factory.FactoryOpts{
+			ProviderName: "GM",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SM3",
+				SecLevel:   256,
+
+				FileKeystore: &factory.FileKeystoreOpts{
+					KeyStorePath: keystorePath,
+				},
+			},
+		})
 	}
 
-	csp, err := factory.GetBCCSPFromOpts(opts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -56,7 +70,11 @@ func LoadPrivateKey(keystorePath string) (bccsp.Key, crypto.Signer, error) {
 			if block == nil {
 				return errors.Errorf("%s: wrong PEM encoding", path)
 			}
-			priv, err = csp.KeyImport(block.Bytes, &bccsp.SM2PrivateKeyImportOpts{Temporary: true})
+			if factory.GetDefault().GetProviderName() == "SW" {
+				priv, err = csp.KeyImport(block.Bytes, &bccsp.ECDSAPrivateKeyImportOpts{Temporary: true})
+			} else {
+				priv, err = csp.KeyImport(block.Bytes, &bccsp.SM2PrivateKeyImportOpts{Temporary: true})
+			}
 			if err != nil {
 				return err
 			}
@@ -86,22 +104,41 @@ func GeneratePrivateKey(keystorePath string) (bccsp.Key,
 	var err error
 	var priv bccsp.Key
 	var s crypto.Signer
+	var csp bccsp.BCCSP
 
-	opts := &factory.FactoryOpts{
-		ProviderName: "GM",
-		SwOpts: &factory.SwOpts{
-			HashFamily: "SM3",
-			SecLevel:   256,
+	if factory.GetDefault().GetProviderName() == "SW" {
+		csp, err = factory.GetBCCSPFromOpts(&factory.FactoryOpts{
+			ProviderName: "SW",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SHA2",
+				SecLevel:   256,
 
-			FileKeystore: &factory.FileKeystoreOpts{
-				KeyStorePath: keystorePath,
+				FileKeystore: &factory.FileKeystoreOpts{
+					KeyStorePath: keystorePath,
+				},
 			},
-		},
+		})
+	} else {
+		csp, err = factory.GetBCCSPFromOpts(&factory.FactoryOpts{
+			ProviderName: "GM",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SM3",
+				SecLevel:   256,
+
+				FileKeystore: &factory.FileKeystoreOpts{
+					KeyStorePath: keystorePath,
+				},
+			},
+		})
 	}
-	csp, err := factory.GetBCCSPFromOpts(opts)
+
 	if err == nil {
 		// generate a key
-		priv, err = csp.KeyGen(&bccsp.SM2KeyGenOpts{Temporary: false})
+		if factory.GetDefault().GetProviderName() == "SW" {
+			priv, err = csp.KeyGen(&bccsp.ECDSAP256KeyGenOpts{Temporary: false})
+		} else {
+			priv, err = csp.KeyGen(&bccsp.SM2KeyGenOpts{Temporary: false})
+		}
 		if err == nil {
 			// create a crypto.Signer
 			s, err = signer.New(csp, priv)

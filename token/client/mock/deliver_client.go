@@ -90,7 +90,7 @@ func (fake *DeliverClient) NewDeliverFilteredReturnsOnCall(i int, result1 client
 	}{result1, result2}
 }
 
-func (fake *DeliverClient) Certificate() *tls.Certificate {
+func (fake *DeliverClient) Certificate() interface{} {
 	fake.certificateMutex.Lock()
 	ret, specificReturn := fake.certificateReturnsOnCall[len(fake.certificateArgsForCall)]
 	fake.certificateArgsForCall = append(fake.certificateArgsForCall, struct{}{})

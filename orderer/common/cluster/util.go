@@ -8,12 +8,15 @@ package cluster
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/channelconfig"
 	"github.com/hyperledger/fabric/common/configtx"
 	"github.com/hyperledger/fabric/common/flogging"
@@ -25,7 +28,7 @@ import (
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/pkg/errors"
 	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 	"google.golang.org/grpc"
 )
 
@@ -120,28 +123,47 @@ func (dialer *PredicateDialer) UpdateRootCAs(serverRootCAs [][]byte) {
 
 // Dial creates a new gRPC connection that can only be established, if the remote node's
 // certificate chain satisfy verifyFunc
-func (dialer *PredicateDialer) Dial(address string, verifyFunc RemoteVerifier) (*grpc.ClientConn, error) {
+func (dialer *PredicateDialer) Dial(address string, verifyFunc interface{}) (*grpc.ClientConn, error) {
 	dialer.lock.RLock()
 	cfg := dialer.ClientConfig.Clone()
 	dialer.lock.RUnlock()
 
-	cfg.SecOpts.VerifyCertificate = verifyFunc
+	if factory.GetDefault().GetProviderName() == "SW" {
+		cfg.SecOpts.VerifyCertificate = verifyFunc.(RemoteVerifier)
+	} else {
+		cfg.SecOpts.VerifyGMCertificate = verifyFunc.(GMRemoteVerifier)
+	}
 	client, err := comm.NewGRPCClient(cfg)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return client.NewConnection(address, "", func(tlsConfig *tls.Config) {
-		// We need to dynamically overwrite the TLS root CAs,
-		// as they may be updated.
-		dialer.lock.RLock()
-		serverRootCAs := dialer.ClientConfig.Clone().SecOpts.ServerRootCAs
-		dialer.lock.RUnlock()
+	if factory.GetDefault().GetProviderName() == "SW" {
+		return client.NewConnection(address, "", func(tlsConfig *tls.Config) {
+			// We need to dynamically overwrite the TLS root CAs,
+			// as they may be updated.
+			dialer.lock.RLock()
+			serverRootCAs := dialer.ClientConfig.Clone().SecOpts.ServerRootCAs
+			dialer.lock.RUnlock()
 
-		tlsConfig.RootCAs = sm2.NewCertPool()
-		for _, pem := range serverRootCAs {
-			tlsConfig.RootCAs.AppendCertsFromPEM(pem)
-		}
-	})
+			tlsConfig.RootCAs = x509.NewCertPool()
+			for _, pem := range serverRootCAs {
+				tlsConfig.RootCAs.AppendCertsFromPEM(pem)
+			}
+		})
+	} else {
+		return client.NewConnection(address, "", func(tlsConfig *gmtls.Config) {
+			// We need to dynamically overwrite the TLS root CAs,
+			// as they may be updated.
+			dialer.lock.RLock()
+			serverRootCAs := dialer.ClientConfig.Clone().SecOpts.ServerRootCAs
+			dialer.lock.RUnlock()
+
+			tlsConfig.RootCAs = sm2.NewCertPool()
+			for _, pem := range serverRootCAs {
+				tlsConfig.RootCAs.AppendCertsFromPEM(pem)
+			}
+		})
+	}
 }
 
 // DERtoPEM returns a PEM representation of the DER

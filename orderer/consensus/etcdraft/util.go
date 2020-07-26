@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/channelconfig"
 	"github.com/hyperledger/fabric/common/configtx"
 	"github.com/hyperledger/fabric/common/flogging"
@@ -96,7 +97,11 @@ func newBlockPuller(support consensus.ConsenterSupport,
 		ClientConfig: baseDialer.ClientConfig.Clone(),
 	}
 	stdDialer.ClientConfig.AsyncConnect = false
-	stdDialer.ClientConfig.SecOpts.VerifyCertificate = nil
+	if factory.GetDefault().GetProviderName() == "SW" {
+		stdDialer.ClientConfig.SecOpts.VerifyCertificate = nil
+	} else {
+		stdDialer.ClientConfig.SecOpts.VerifyGMCertificate = nil
+	}
 
 	// Extract the TLS CA certs and endpoints from the configuration,
 	endpoints, err := EndpointconfigFromFromSupport(support)

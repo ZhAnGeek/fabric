@@ -7,6 +7,9 @@ SPDX-License-Identifier: Apache-2.0
 package common
 
 import (
+	"crypto/tls"
+
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/hyperledger/fabric/common/localmsp"
 	"github.com/hyperledger/fabric/common/util"
@@ -16,6 +19,7 @@ import (
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmtls"
 )
 
 var (
@@ -168,8 +172,14 @@ func NewDeliverClientForOrderer(channelID string, bestEffort bool) (*DeliverClie
 		return nil, errors.WithMessage(err, "failed to create deliver client")
 	}
 	// check for client certificate and create hash if present
-	if len(oc.Certificate().Certificate) > 0 {
-		tlsCertHash = util.ComputeSM3(oc.Certificate().Certificate[0])
+	if factory.GetDefault().GetProviderName() == "SW" {
+		if len(oc.Certificate().(tls.Certificate).Certificate) > 0 {
+			tlsCertHash = util.ComputeSHA256(oc.Certificate().(tls.Certificate).Certificate[0])
+		}
+	} else {
+		if len(oc.Certificate().(gmtls.Certificate).Certificate) > 0 {
+			tlsCertHash = util.ComputeSM3(oc.Certificate().(gmtls.Certificate).Certificate[0])
+		}
 	}
 	ds := &ordererDeliverService{dc}
 	o := &DeliverClient{
@@ -199,8 +209,14 @@ func NewDeliverClientForPeer(channelID string, bestEffort bool) (*DeliverClient,
 	}
 
 	// check for client certificate and create hash if present
-	if len(pc.Certificate().Certificate) > 0 {
-		tlsCertHash = util.ComputeSM3(pc.Certificate().Certificate[0])
+	if factory.GetDefault().GetProviderName() == "SW" {
+		if len(pc.Certificate().(tls.Certificate).Certificate) > 0 {
+			tlsCertHash = util.ComputeSHA256(pc.Certificate().(tls.Certificate).Certificate[0])
+		}
+	} else {
+		if len(pc.Certificate().(gmtls.Certificate).Certificate) > 0 {
+			tlsCertHash = util.ComputeSM3(pc.Certificate().(gmtls.Certificate).Certificate[0])
+		}
 	}
 	ds := &peerDeliverService{d}
 	p := &DeliverClient{

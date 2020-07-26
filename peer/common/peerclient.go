@@ -8,17 +8,19 @@ package common
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"time"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/core/comm"
 	"github.com/hyperledger/fabric/core/config"
 	"github.com/hyperledger/fabric/peer/common/api"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 )
 
 // PeerClient represents a client for communicating with a peer
@@ -134,7 +136,7 @@ func (pc *PeerClient) Admin() (pb.AdminClient, error) {
 }
 
 // Certificate returns the TLS client certificate (if available)
-func (pc *PeerClient) Certificate() tls.Certificate {
+func (pc *PeerClient) Certificate() interface{} {
 	return pc.commonClient.Certificate()
 }
 
@@ -157,10 +159,14 @@ func GetEndorserClient(address, tlsRootCertFile string) (pb.EndorserClient, erro
 }
 
 // GetCertificate returns the client's TLS certificate
-func GetCertificate() (tls.Certificate, error) {
+func GetCertificate() (interface{}, error) {
 	peerClient, err := NewPeerClientFromEnv()
 	if err != nil {
-		return tls.Certificate{}, err
+		if factory.GetDefault().GetProviderName() == "SW" {
+			return tls.Certificate{}, err
+		} else {
+			return gmtls.Certificate{}, err
+		}
 	}
 	return peerClient.Certificate(), nil
 }

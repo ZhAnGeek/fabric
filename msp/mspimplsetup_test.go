@@ -114,7 +114,7 @@ func TestCAValidation(t *testing.T) {
 		cert, err := mspImpl.getCertFromPem([]byte(caCert))
 		gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-		mspImpl.opts.Roots.AddCert(cert)
+		mspImpl.opts.(*sm2.VerifyOptions).Roots.AddCert(cert.(*sm2.Certificate))
 		mspImpl.rootCerts = []Identity{&identity{cert: cert}}
 
 		err = mspImpl.finalizeSetupCAs()
@@ -128,7 +128,7 @@ func TestCAValidation(t *testing.T) {
 		cert, err := mspImpl.getCertFromPem([]byte(nonCACert))
 		gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-		mspImpl.opts.Roots.AddCert(cert)
+		mspImpl.opts.(*sm2.VerifyOptions).Roots.AddCert(cert.(*sm2.Certificate))
 		mspImpl.rootCerts = []Identity{&identity{cert: cert}}
 
 		err = mspImpl.finalizeSetupCAs()
@@ -142,7 +142,7 @@ func TestCAValidation(t *testing.T) {
 		cert, err := mspImpl.getCertFromPem([]byte(caWithoutSKI))
 		gt.Expect(err).NotTo(gomega.HaveOccurred())
 
-		mspImpl.opts.Roots.AddCert(cert)
+		mspImpl.opts.(*sm2.VerifyOptions).Roots.AddCert(cert.(*sm2.Certificate))
 		mspImpl.rootCerts = []Identity{&identity{cert: cert}}
 
 		err = mspImpl.finalizeSetupCAs()

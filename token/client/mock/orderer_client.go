@@ -90,7 +90,7 @@ func (fake *OrdererClient) NewBroadcastReturnsOnCall(i int, result1 client.Broad
 	}{result1, result2}
 }
 
-func (fake *OrdererClient) Certificate() *tls.Certificate {
+func (fake *OrdererClient) Certificate() interface{} {
 	fake.certificateMutex.Lock()
 	ret, specificReturn := fake.certificateReturnsOnCall[len(fake.certificateArgsForCall)]
 	fake.certificateArgsForCall = append(fake.certificateArgsForCall, struct{}{})

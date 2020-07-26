@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/tjfoc/gmsm/sm2"
+
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/stretchr/testify/assert"
 )
@@ -28,7 +30,7 @@ func TestSigner(t *testing.T) {
 	sig, err := signer.Sign(msg)
 	assert.NoError(t, err)
 
-	assert.True(t, signer.key.PublicKey.Verify(util.ComputeSM3(msg), sig))
+	assert.True(t, signer.key.(*sm2.PrivateKey).PublicKey.Verify(util.ComputeSM3(msg), sig))
 }
 
 func TestSignerBadConfig(t *testing.T) {

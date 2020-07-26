@@ -8,9 +8,11 @@ package cluster
 
 import (
 	"bytes"
+	"crypto/x509"
 	"sync"
 	"sync/atomic"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/metrics"
 	"github.com/pkg/errors"
 	"github.com/tjfoc/gmsm/sm2"
@@ -18,13 +20,16 @@ import (
 )
 
 // RemoteVerifier verifies the connection to the remote host
-type RemoteVerifier func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error
+type RemoteVerifier func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
+
+// GMRemoteVerifier verifies the connection to the remote host
+type GMRemoteVerifier func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error
 
 //go:generate mockery -dir . -name SecureDialer -case underscore -output ./mocks/
 
 // SecureDialer connects to a remote address
 type SecureDialer interface {
-	Dial(address string, verifyFunc RemoteVerifier) (*grpc.ClientConn, error)
+	Dial(address string, verifyFunc interface{}) (*grpc.ClientConn, error)
 }
 
 // ConnectionMapper maps certificates to connections
@@ -57,12 +62,21 @@ func NewConnectionStore(dialer SecureDialer, tlsConnectionCount metrics.Gauge) *
 
 // verifyHandshake returns a predicate that verifies that the remote node authenticates
 // itself with the given TLS certificate
-func (c *ConnectionStore) verifyHandshake(endpoint string, certificate []byte) RemoteVerifier {
-	return func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error {
-		if bytes.Equal(certificate, rawCerts[0]) {
-			return nil
+func (c *ConnectionStore) verifyHandshake(endpoint string, certificate []byte) interface{} {
+	if factory.GetDefault().GetProviderName() == "SW" {
+		return func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+			if bytes.Equal(certificate, rawCerts[0]) {
+				return nil
+			}
+			return errors.Errorf("certificate presented by %s doesn't match any authorized certificate", endpoint)
 		}
-		return errors.Errorf("certificate presented by %s doesn't match any authorized certificate", endpoint)
+	} else {
+		return func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error {
+			if bytes.Equal(certificate, rawCerts[0]) {
+				return nil
+			}
+			return errors.Errorf("certificate presented by %s doesn't match any authorized certificate", endpoint)
+		}
 	}
 }
 

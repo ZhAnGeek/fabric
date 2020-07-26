@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/tjfoc/gmsm/sm2"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -259,7 +260,7 @@ func TestExpirationWarningIngress(t *testing.T) {
 	dispatcher.On("DispatchConsensus", mock.Anything, mock.Anything).Return(nil)
 
 	svc := &cluster.Service{
-		CertExpWarningThreshold:          time.Until(clientCert.TLSCert.NotAfter),
+		CertExpWarningThreshold:          time.Until(clientCert.TLSCert.(*sm2.Certificate).NotAfter),
 		MinimumExpirationWarningInterval: time.Second * 2,
 		StreamCountReporter: &cluster.StreamCountReporter{
 			Metrics: cluster.NewMetrics(&disabled.Provider{}),

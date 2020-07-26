@@ -18,6 +18,11 @@ func New(config map[string]interface{}) (bccsp.BCCSP, error) {
 	return &impl{}, nil
 }
 
+// GetProviderName return provider name.
+func (csp *impl) GetProviderName() string {
+	return ""
+}
+
 // KeyGen generates a key using opts.
 func (csp *impl) KeyGen(opts bccsp.KeyGenOpts) (k bccsp.Key, err error) {
 	return nil, nil

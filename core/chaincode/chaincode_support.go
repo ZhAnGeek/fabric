@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/metrics"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/chaincode/platforms"
@@ -104,6 +105,7 @@ func NewChaincodeSupport(
 			"CORE_CHAINCODE_LOGGING_LEVEL=" + config.LogLevel,
 			"CORE_CHAINCODE_LOGGING_SHIM=" + config.ShimLogLevel,
 			"CORE_CHAINCODE_LOGGING_FORMAT=" + config.LogFormat,
+			"CORE_CHAINCODE_BCCSP=" + factory.GetDefault().GetProviderName(),
 		},
 	}
 

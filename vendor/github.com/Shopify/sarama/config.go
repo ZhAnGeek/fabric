@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/rcrowley/go-metrics"
-	tls "github.com/tjfoc/gmtls"
 )
 
 const defaultClientID = "sarama"
@@ -45,7 +44,7 @@ type Config struct {
 			Enable bool
 			// The TLS configuration to use for secure connections if
 			// enabled (defaults to nil).
-			Config *tls.Config
+			Config interface{}
 		}
 
 		// SASL based authentication with broker. While there are multiple SASL authentication methods

@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/cmd/common/comm"
 	"github.com/hyperledger/fabric/cmd/common/signer"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -31,6 +32,7 @@ var (
 	mspID                                     *string
 	tlsCA, tlsCert, tlsKey, userKey, userCert **os.File
 	configFile                                *string
+	bccsp                                     *string
 )
 
 // CLICommand defines a command that is added to the CLI
@@ -60,6 +62,25 @@ func (cli *CLI) Command(name, help string, onCommand CLICommand) *kingpin.CmdCla
 
 // Run makes the CLI process the arguments and executes the command(s) with the flag(s)
 func (cli *CLI) Run(args []string) {
+	bccsp = cli.app.Flag("bccsp", "Blockchain cryptographic service provider name").String()
+	if *bccsp == "SW" {
+		factory.InitFactories(&factory.FactoryOpts{
+			ProviderName: "SW",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SHA2",
+				SecLevel:   256,
+			},
+		})
+	} else {
+		factory.InitFactories(&factory.FactoryOpts{
+			ProviderName: "GM",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SM3",
+				SecLevel:   256,
+			},
+		})
+	}
+
 	configFile = cli.app.Flag("configFile", "Specifies the config file to load the configuration from").String()
 	persist := cli.app.Command(saveConfigCommand, fmt.Sprintf("Save the config passed by flags into the file specified by --configFile"))
 	configureFlags(cli.app)

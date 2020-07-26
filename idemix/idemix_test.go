@@ -12,6 +12,7 @@ import (
 
 	"github.com/hyperledger/fabric-amcl/amcl/FP256BN"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 func TestIdemix(t *testing.T) {
@@ -116,11 +117,11 @@ func TestIdemix(t *testing.T) {
 	epoch := 0
 	cri, err := CreateCRI(revocationKey, []*FP256BN.BIG{}, epoch, ALG_NO_REVOCATION, rng)
 	assert.NoError(t, err)
-	err = VerifyEpochPK(&revocationKey.PublicKey, cri.EpochPk, cri.EpochPkSig, int(cri.Epoch), RevocationAlgorithm(cri.RevocationAlg))
+	err = VerifyEpochPK(&revocationKey.(*sm2.PrivateKey).PublicKey, cri.EpochPk, cri.EpochPkSig, int(cri.Epoch), RevocationAlgorithm(cri.RevocationAlg))
 	assert.NoError(t, err)
 
 	// make sure that epoch pk is not valid in future epoch
-	err = VerifyEpochPK(&revocationKey.PublicKey, cri.EpochPk, cri.EpochPkSig, int(cri.Epoch)+1, RevocationAlgorithm(cri.RevocationAlg))
+	err = VerifyEpochPK(&revocationKey.(*sm2.PrivateKey).PublicKey, cri.EpochPk, cri.EpochPkSig, int(cri.Epoch)+1, RevocationAlgorithm(cri.RevocationAlg))
 	assert.Error(t, err)
 
 	// Test bad input
@@ -138,7 +139,7 @@ func TestIdemix(t *testing.T) {
 	sig, err := NewSignature(cred, sk, Nym, RandNym, key.Ipk, disclosure, msg, rhindex, cri, rng)
 	assert.NoError(t, err)
 
-	err = sig.Ver(disclosure, key.Ipk, msg, nil, 0, &revocationKey.PublicKey, epoch)
+	err = sig.Ver(disclosure, key.Ipk, msg, nil, 0, &revocationKey.(*sm2.PrivateKey).PublicKey, epoch)
 	if err != nil {
 		t.Fatalf("Signature should be valid but verification returned error: %s", err)
 		return
@@ -149,7 +150,7 @@ func TestIdemix(t *testing.T) {
 	sig, err = NewSignature(cred, sk, Nym, RandNym, key.Ipk, disclosure, msg, rhindex, cri, rng)
 	assert.NoError(t, err)
 
-	err = sig.Ver(disclosure, key.Ipk, msg, attrs, rhindex, &revocationKey.PublicKey, epoch)
+	err = sig.Ver(disclosure, key.Ipk, msg, attrs, rhindex, &revocationKey.(*sm2.PrivateKey).PublicKey, epoch)
 	assert.NoError(t, err)
 
 	// Test NymSignatures

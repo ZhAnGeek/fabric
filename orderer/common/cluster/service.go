@@ -8,13 +8,16 @@ package cluster
 
 import (
 	"context"
+	"crypto/x509"
 	"io"
 	"time"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/comm"
 	"github.com/hyperledger/fabric/protos/orderer"
+	"github.com/tjfoc/gmsm/sm2"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
@@ -124,7 +127,11 @@ func expiresAt(stream orderer.Cluster_StepServer) time.Time {
 	if cert == nil {
 		return time.Time{}
 	}
-	return cert.NotAfter
+	if factory.GetDefault().GetProviderName() == "SW" {
+		return cert.(*x509.Certificate).NotAfter
+	} else {
+		return cert.(*sm2.Certificate).NotAfter
+	}
 }
 
 func extractChannel(msg *orderer.StepRequest) string {

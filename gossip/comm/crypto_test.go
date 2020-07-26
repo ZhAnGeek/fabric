@@ -73,14 +73,15 @@ func (s *gossipTestServer) Ping(context.Context, *proto.Empty) (*proto.Empty, er
 }
 
 func TestCertificateExtraction(t *testing.T) {
-	cert := GenerateCertificatesOrPanic()
+	certInterface := GenerateCertificatesOrPanic()
+	cert := certInterface.(tls.Certificate)
 	srv, ll := createTestServer(t, &cert)
 	defer srv.stop()
 
 	clientCert := GenerateCertificatesOrPanic()
-	clientCertHash := certHashFromRawCert(clientCert.Certificate[0])
+	clientCertHash := certHashFromRawCert(clientCert.(tls.Certificate).Certificate[0])
 	ta := credentials.NewTLS(&tls.Config{
-		Certificates:       []tls.Certificate{clientCert},
+		Certificates:       []tls.Certificate{clientCert.(tls.Certificate)},
 		InsecureSkipVerify: true,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)

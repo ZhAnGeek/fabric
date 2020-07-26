@@ -203,7 +203,7 @@ var _ = Describe("Revocation", func() {
 
 			It("returns an error", func() {
 				k, err := RevocationPublicKeyImporter.KeyImport([]byte("fake-raw"), nil)
-				Expect(err).To(MatchError("Failed to decode revocation SM2 public key"))
+				Expect(err).To(MatchError("Failed to decode revocation ECDSA or SM2 public key"))
 				Expect(k).To(BeNil())
 			})
 

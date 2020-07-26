@@ -7,13 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package kafka
 
 import (
-	"crypto/tls"
 	"testing"
 
 	"github.com/Shopify/sarama"
 	localconfig "github.com/hyperledger/fabric/orderer/common/localconfig"
 	"github.com/hyperledger/fabric/orderer/mocks/util"
 	"github.com/stretchr/testify/assert"
+	tls "github.com/tjfoc/gmtls"
 )
 
 func TestBrokerConfig(t *testing.T) {
@@ -97,10 +97,10 @@ func TestBrokerConfigTLSConfigEnabled(t *testing.T) {
 
 		assert.True(t, testBrokerConfig.Net.TLS.Enable)
 		assert.NotNil(t, testBrokerConfig.Net.TLS.Config)
-		assert.Len(t, testBrokerConfig.Net.TLS.Config.Certificates, 1)
-		assert.Len(t, testBrokerConfig.Net.TLS.Config.RootCAs.Subjects(), 1)
-		assert.Equal(t, uint16(0), testBrokerConfig.Net.TLS.Config.MaxVersion)
-		assert.Equal(t, uint16(tls.VersionTLS12), testBrokerConfig.Net.TLS.Config.MinVersion)
+		assert.Len(t, testBrokerConfig.Net.TLS.Config.(*tls.Config).Certificates, 1)
+		assert.Len(t, testBrokerConfig.Net.TLS.Config.(*tls.Config).RootCAs.Subjects(), 1)
+		assert.Equal(t, uint16(0), testBrokerConfig.Net.TLS.Config.(*tls.Config).MaxVersion)
+		assert.Equal(t, uint16(tls.VersionTLS12), testBrokerConfig.Net.TLS.Config.(*tls.Config).MinVersion)
 	})
 
 	t.Run("Disabled", func(t *testing.T) {

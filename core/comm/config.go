@@ -7,12 +7,14 @@ SPDX-License-Identifier: Apache-2.0
 package comm
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"time"
 
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/hyperledger/fabric/common/metrics"
 	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
 )
@@ -32,8 +34,16 @@ var (
 	}
 	// strong TLS cipher suites
 	DefaultTLSCipherSuites = []uint16{
-		tls.TLS_ECDHE_SM2_WITH_SM4_CBC_SM3,
-		tls.TLS_SM2_WITH_SM4_CBC_SM3,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+	}
+	DefaultGMTLSCipherSuites = []uint16{
+		gmtls.TLS_ECDHE_SM2_WITH_SM4_CBC_SM3,
+		gmtls.TLS_SM2_WITH_SM4_CBC_SM3,
 	}
 	// default connection timeout
 	DefaultConnectionTimeout = 5 * time.Second
@@ -93,7 +103,8 @@ type SecureOptions struct {
 	// VerifyCertificate, if not nil, is called after normal
 	// certificate verification by either a TLS client or server.
 	// If it returns a non-nil error, the handshake is aborted and that error results.
-	VerifyCertificate func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error
+	VerifyCertificate   func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error
+	VerifyGMCertificate func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error
 	// PEM-encoded X509 public key to be used for TLS communication
 	Certificate []byte
 	// PEM-encoded private key to be used for TLS communication

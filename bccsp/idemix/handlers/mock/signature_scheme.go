@@ -6,7 +6,6 @@ import (
 
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/idemix/handlers"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 type SignatureScheme struct {
@@ -31,7 +30,7 @@ type SignatureScheme struct {
 		result1 []byte
 		result2 error
 	}
-	VerifyStub        func(pk handlers.IssuerPublicKey, signature, digest []byte, attributes []bccsp.IdemixAttribute, hIndex int, revocationPublicKey *sm2.PublicKey, epoch int) error
+	VerifyStub        func(pk handlers.IssuerPublicKey, signature, digest []byte, attributes []bccsp.IdemixAttribute, hIndex int, revocationPublicKey interface{}, epoch int) error
 	verifyMutex       sync.RWMutex
 	verifyArgsForCall []struct {
 		pk                  handlers.IssuerPublicKey
@@ -39,7 +38,7 @@ type SignatureScheme struct {
 		digest              []byte
 		attributes          []bccsp.IdemixAttribute
 		hIndex              int
-		revocationPublicKey *sm2.PublicKey
+		revocationPublicKey interface{}
 		epoch               int
 	}
 	verifyReturns struct {
@@ -131,7 +130,7 @@ func (fake *SignatureScheme) SignReturnsOnCall(i int, result1 []byte, result2 er
 	}{result1, result2}
 }
 
-func (fake *SignatureScheme) Verify(pk handlers.IssuerPublicKey, signature []byte, digest []byte, attributes []bccsp.IdemixAttribute, hIndex int, revocationPublicKey *sm2.PublicKey, epoch int) error {
+func (fake *SignatureScheme) Verify(pk handlers.IssuerPublicKey, signature []byte, digest []byte, attributes []bccsp.IdemixAttribute, hIndex int, revocationPublicKey interface{}, epoch int) error {
 	var signatureCopy []byte
 	if signature != nil {
 		signatureCopy = make([]byte, len(signature))
@@ -155,7 +154,7 @@ func (fake *SignatureScheme) Verify(pk handlers.IssuerPublicKey, signature []byt
 		digest              []byte
 		attributes          []bccsp.IdemixAttribute
 		hIndex              int
-		revocationPublicKey *sm2.PublicKey
+		revocationPublicKey interface{}
 		epoch               int
 	}{pk, signatureCopy, digestCopy, attributesCopy, hIndex, revocationPublicKey, epoch})
 	fake.recordInvocation("Verify", []interface{}{pk, signatureCopy, digestCopy, attributesCopy, hIndex, revocationPublicKey, epoch})
@@ -175,7 +174,7 @@ func (fake *SignatureScheme) VerifyCallCount() int {
 	return len(fake.verifyArgsForCall)
 }
 
-func (fake *SignatureScheme) VerifyArgsForCall(i int) (handlers.IssuerPublicKey, []byte, []byte, []bccsp.IdemixAttribute, int, *sm2.PublicKey, int) {
+func (fake *SignatureScheme) VerifyArgsForCall(i int) (handlers.IssuerPublicKey, []byte, []byte, []bccsp.IdemixAttribute, int, interface{}, int) {
 	fake.verifyMutex.RLock()
 	defer fake.verifyMutex.RUnlock()
 	return fake.verifyArgsForCall[i].pk, fake.verifyArgsForCall[i].signature, fake.verifyArgsForCall[i].digest, fake.verifyArgsForCall[i].attributes, fake.verifyArgsForCall[i].hIndex, fake.verifyArgsForCall[i].revocationPublicKey, fake.verifyArgsForCall[i].epoch

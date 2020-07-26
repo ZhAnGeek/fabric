@@ -228,10 +228,14 @@ func PEMtoPrivateKey(raw []byte, pwd []byte) (interface{}, error) {
 		return nil, errors.New("Invalid PEM. It must be different from nil.")
 	}
 
-	if key, err := sm2.ReadPrivateKeyFromMem(raw, pwd); err == nil {
+	if key, err := pemToPrivateKey(raw, pwd); err == nil {
 		return key, nil
 	}
 
+	return sm2.ReadPrivateKeyFromMem(raw, pwd)
+}
+
+func pemToPrivateKey(raw []byte, pwd []byte) (interface{}, error) {
 	block, _ := pem.Decode(raw)
 	if block == nil {
 		return nil, fmt.Errorf("Failed decoding PEM. Block must be different from nil. [% x]", raw)

@@ -8,12 +8,17 @@ package accesscontrol
 
 import (
 	"context"
+	"crypto/x509"
 	"sync"
 	"time"
 
+	"github.com/tjfoc/gmsm/sm2"
+
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/crypto/tlsgen"
 	"github.com/hyperledger/fabric/common/util"
-	credentials "github.com/tjfoc/gmtls/gmcredentials"
+	"github.com/tjfoc/gmtls/gmcredentials"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 )
 
@@ -62,7 +67,12 @@ func (r *certMapper) genCert(name string) (*tlsgen.CertKeyPair, error) {
 	if err != nil {
 		return nil, err
 	}
-	hash := util.ComputeSM3(keyPair.TLSCert.Raw)
+	var hash []byte
+	if factory.GetDefault().GetProviderName() == "SW" {
+		hash = util.ComputeSHA256(keyPair.TLSCert.(*x509.Certificate).Raw)
+	} else {
+		hash = util.ComputeSM3(keyPair.TLSCert.(*sm2.Certificate).Raw)
+	}
 	r.register(certHash(hash), name)
 	return keyPair, nil
 }
@@ -79,17 +89,33 @@ func extractCertificateHashFromContext(ctx context.Context) []byte {
 		return nil
 	}
 
-	tlsInfo, isTLSConn := authInfo.(credentials.TLSInfo)
-	if !isTLSConn {
-		return nil
+	if factory.GetDefault().GetProviderName() == "SW" {
+		tlsInfo, isTLSConn := authInfo.(credentials.TLSInfo)
+		if !isTLSConn {
+			return nil
+		}
+		certs := tlsInfo.State.PeerCertificates
+		if len(certs) == 0 {
+			return nil
+		}
+		raw := certs[0].Raw
+		if len(raw) == 0 {
+			return nil
+		}
+		return util.ComputeSHA256(raw)
+	} else {
+		tlsInfo, isTLSConn := authInfo.(gmcredentials.TLSInfo)
+		if !isTLSConn {
+			return nil
+		}
+		certs := tlsInfo.State.PeerCertificates
+		if len(certs) == 0 {
+			return nil
+		}
+		raw := certs[0].Raw
+		if len(raw) == 0 {
+			return nil
+		}
+		return util.ComputeSM3(raw)
 	}
-	certs := tlsInfo.State.PeerCertificates
-	if len(certs) == 0 {
-		return nil
-	}
-	raw := certs[0].Raw
-	if len(raw) == 0 {
-		return nil
-	}
-	return util.ComputeSM3(raw)
 }

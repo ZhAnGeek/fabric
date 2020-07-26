@@ -651,8 +651,8 @@ func TestCertificationIdentifierComputation(t *testing.T) {
 	hf, err := localMsp.(*bccspmsp).bccsp.GetHash(hashOpt)
 	assert.NoError(t, err)
 	// Skipping first cert because it belongs to the identity
-	for i := 1; i < len(chain); i++ {
-		hf.Write(chain[i].Raw)
+	for i := 1; i < len(chain.([]*sm2.Certificate)); i++ {
+		hf.Write(chain.([]*sm2.Certificate)[i].Raw)
 	}
 	sum := hf.Sum(nil)
 
@@ -1335,7 +1335,7 @@ func TestMSPIdentityIdentifier(t *testing.T) {
 	assert.False(t, lowS)
 
 	// Check that id.(*signingidentity).cert is in LoswS
-	_, S, err = utils.UnmarshalECDSASignature(id.(*signingidentity).cert.Signature)
+	_, S, err = utils.UnmarshalECDSASignature(id.(*signingidentity).cert.(*sm2.Certificate).Signature)
 	assert.NoError(t, err)
 	lowS, err = utils.IsLowS(caCertFromFile.PublicKey.(*ecdsa.PublicKey), S)
 	assert.NoError(t, err)

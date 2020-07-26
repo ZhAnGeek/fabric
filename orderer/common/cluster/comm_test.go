@@ -18,6 +18,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/tjfoc/gmsm/sm2"
+
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/crypto/tlsgen"
 	"github.com/hyperledger/fabric/common/flogging"
@@ -205,8 +207,8 @@ func (cn *clusterNode) renewCertificates() {
 		panic(fmt.Errorf("failed creating server certificate %v", err))
 	}
 
-	cn.nodeInfo.ClientTLSCert = clientKeyPair.TLSCert.Raw
-	cn.nodeInfo.ServerTLSCert = serverKeyPair.TLSCert.Raw
+	cn.nodeInfo.ClientTLSCert = clientKeyPair.TLSCert.(*sm2.Certificate).Raw
+	cn.nodeInfo.ServerTLSCert = serverKeyPair.TLSCert.(*sm2.Certificate).Raw
 
 	cn.serverConfig.SecOpts.Certificate = serverKeyPair.Cert
 	cn.serverConfig.SecOpts.Key = serverKeyPair.Key
@@ -258,8 +260,8 @@ func newTestNodeWithMetrics(t *testing.T, metrics cluster.MetricsProvider, tlsCo
 		nodeInfo: cluster.RemoteNode{
 			Endpoint:      gRPCServer.Address(),
 			ID:            nextUnusedID(),
-			ServerTLSCert: serverKeyPair.TLSCert.Raw,
-			ClientTLSCert: clientKeyPair.TLSCert.Raw,
+			ServerTLSCert: serverKeyPair.TLSCert.(*sm2.Certificate).Raw,
+			ClientTLSCert: clientKeyPair.TLSCert.(*sm2.Certificate).Raw,
 		},
 		srv: gRPCServer,
 	}

@@ -7,6 +7,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"math"
 
@@ -18,7 +19,7 @@ import (
 	ab "github.com/hyperledger/fabric/protos/orderer"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/pkg/errors"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
@@ -40,7 +41,7 @@ type DeliverClient interface {
 	NewDeliverFiltered(ctx context.Context, opts ...grpc.CallOption) (DeliverFiltered, error)
 
 	// Certificate returns tls certificate for the deliver client to commit peer
-	Certificate() *tls.Certificate
+	Certificate() interface{}
 }
 
 // deliverClient implements DeliverClient interface
@@ -94,22 +95,33 @@ func (d *deliverClient) NewDeliverFiltered(ctx context.Context, opts ...grpc.Cal
 	return df, nil
 }
 
-func (d *deliverClient) Certificate() *tls.Certificate {
+func (d *deliverClient) Certificate() interface{} {
 	cert := d.grpcClient.Certificate()
 	return &cert
 }
 
 // create a signed envelope with SeekPosition_Newest for block
-func CreateDeliverEnvelope(channelId string, creator []byte, signer SignerIdentity, cert *tls.Certificate) (*common.Envelope, error) {
+func CreateDeliverEnvelope(channelId string, creator []byte, signer SignerIdentity, cert interface{}) (*common.Envelope, error) {
 	var tlsCertHash []byte
 	var err error
 	// check for client certificate and compute SHA2-256 on certificate if present
-	if cert != nil && len(cert.Certificate) > 0 {
-		tlsCertHash, err = factory.GetDefault().Hash(cert.Certificate[0], &bccsp.SM3Opts{})
-		if err != nil {
-			err = errors.New("failed to compute SM3 on client certificate")
-			logger.Errorf("%s", err)
-			return nil, err
+	if factory.GetDefault().GetProviderName() == "SW" {
+		if cert != nil && cert.(*tls.Certificate) != nil && len(cert.(*tls.Certificate).Certificate) > 0 {
+			tlsCertHash, err = factory.GetDefault().Hash(cert.(*tls.Certificate).Certificate[0], &bccsp.SHA256Opts{})
+			if err != nil {
+				err = errors.New("failed to compute SHA256 on client certificate")
+				logger.Errorf("%s", err)
+				return nil, err
+			}
+		}
+	} else {
+		if cert != nil && cert.(*gmtls.Certificate) != nil && len(cert.(*gmtls.Certificate).Certificate) > 0 {
+			tlsCertHash, err = factory.GetDefault().Hash(cert.(*gmtls.Certificate).Certificate[0], &bccsp.SM3Opts{})
+			if err != nil {
+				err = errors.New("failed to compute SM3 on client certificate")
+				logger.Errorf("%s", err)
+				return nil, err
+			}
 		}
 	}
 

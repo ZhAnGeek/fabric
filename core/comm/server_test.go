@@ -769,7 +769,7 @@ func TestVerifyCertificateCallback(t *testing.T) {
 	assert.NoError(t, err)
 
 	verifyFunc := func(rawCerts [][]byte, verifiedChains [][]*sm2.Certificate) error {
-		if bytes.Equal(rawCerts[0], authorizedClientKeyPair.TLSCert.Raw) {
+		if bytes.Equal(rawCerts[0], authorizedClientKeyPair.TLSCert.(*sm2.Certificate).Raw) {
 			return nil
 		}
 		return errors.New("certificate mismatch")
@@ -793,11 +793,11 @@ func TestVerifyCertificateCallback(t *testing.T) {
 
 	gRPCServer, err := comm.NewGRPCServer("127.0.0.1:", comm.ServerConfig{
 		SecOpts: &comm.SecureOptions{
-			ClientRootCAs:     [][]byte{ca.CertBytes()},
-			Key:               serverKeyPair.Key,
-			Certificate:       serverKeyPair.Cert,
-			UseTLS:            true,
-			VerifyCertificate: verifyFunc,
+			ClientRootCAs:       [][]byte{ca.CertBytes()},
+			Key:                 serverKeyPair.Key,
+			Certificate:         serverKeyPair.Cert,
+			UseTLS:              true,
+			VerifyGMCertificate: verifyFunc,
 		},
 	})
 	go gRPCServer.Start()

@@ -150,11 +150,11 @@ func TestAddRootCA(t *testing.T) {
 	}
 	config := comm.NewTLSConfig(tlsConfig)
 
-	assert.Equal(t, config.Config().ClientCAs, certPool)
+	assert.Equal(t, config.Config().(tls.Config).ClientCAs, certPool)
 
 	config.AddClientRootCA(cert)
 
-	assert.Equal(t, config.Config().ClientCAs, expectedCertPool, "The CertPools should be equal")
+	assert.Equal(t, config.Config().(tls.Config).ClientCAs, expectedCertPool, "The CertPools should be equal")
 }
 
 func TestSetClientCAs(t *testing.T) {
@@ -164,10 +164,10 @@ func TestSetClientCAs(t *testing.T) {
 	}
 	config := comm.NewTLSConfig(tlsConfig)
 
-	assert.Empty(t, config.Config().ClientCAs, "No CertPool should be defined")
+	assert.Empty(t, config.Config().(tls.Config).ClientCAs, "No CertPool should be defined")
 
 	certPool := sm2.NewCertPool()
 	config.SetClientCAs(certPool)
 
-	assert.NotNil(t, config.Config().ClientCAs, "The CertPools' should not be the same")
+	assert.NotNil(t, config.Config().(tls.Config).ClientCAs, "The CertPools' should not be the same")
 }

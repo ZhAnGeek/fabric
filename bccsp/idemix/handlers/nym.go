@@ -6,7 +6,11 @@ SPDX-License-Identifier: Apache-2.0
 package handlers
 
 import (
+	"crypto/sha256"
+	"hash"
+
 	"github.com/hyperledger/fabric/bccsp"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/pkg/errors"
 	"github.com/tjfoc/gmsm/sm3"
 )
@@ -29,10 +33,14 @@ func computeSKI(serialise func() ([]byte, error)) ([]byte, error) {
 		return nil, err
 	}
 
-	hash := sm3.New()
+	var hash hash.Hash
+	if factory.GetDefault().GetProviderName() == "SW" {
+		hash = sha256.New()
+	} else {
+		hash = sm3.New()
+	}
 	hash.Write(raw)
 	return hash.Sum(nil), nil
-
 }
 
 func NewNymSecretKey(sk Big, pk Ecp, exportable bool) (*nymSecretKey, error) {

@@ -9,6 +9,7 @@ package comm
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"reflect"
@@ -16,6 +17,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/gossip/api"
 	"github.com/hyperledger/fabric/gossip/common"
 	"github.com/hyperledger/fabric/gossip/identity"
@@ -23,7 +25,7 @@ import (
 	"github.com/hyperledger/fabric/gossip/util"
 	proto "github.com/hyperledger/fabric/protos/gossip"
 	"github.com/pkg/errors"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 )
@@ -418,7 +420,26 @@ func (c *commImpl) authenticateRemotePeer(stream stream, initiator bool) (*proto
 		if initiator {
 			certReference = c.tlsCerts.TLSClientCert
 		}
-		selfCertHash = certHashFromRawCert(certReference.Load().(*tls.Certificate).Certificate[0])
+		if factory.GetDefault().GetProviderName() == "SW" {
+			loaded := certReference.Load()
+			if tlsCert, ok := loaded.(*tls.Certificate); ok {
+				selfCertHash = certHashFromRawCert(tlsCert.Certificate[0])
+			} else {
+				certInterface := *(loaded.(*interface{}))
+				cert := certInterface.(tls.Certificate)
+				selfCertHash = certHashFromRawCert((&cert).Certificate[0])
+			}
+		} else {
+			loaded := certReference.Load()
+			if gmtlsCert, ok := loaded.(*gmtls.Certificate); ok {
+				selfCertHash = certHashFromRawCert(gmtlsCert.Certificate[0])
+			} else {
+				certInterface := *(loaded.(*interface{}))
+				cert := certInterface.(gmtls.Certificate)
+				selfCertHash = certHashFromRawCert((&cert).Certificate[0])
+			}
+
+		}
 	}
 
 	signer := func(msg []byte) ([]byte, error) {

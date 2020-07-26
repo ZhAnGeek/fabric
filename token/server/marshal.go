@@ -62,7 +62,7 @@ func (s *ResponseMarshaler) MarshalCommandResponse(command []byte, responsePaylo
 
 	cr.Header = &token.CommandResponseHeader{
 		Creator:     s.Creator,
-		CommandHash: util.ComputeSM3(command),
+		CommandHash: util.ComputeHash(command),
 		Timestamp:   ts,
 	}
 

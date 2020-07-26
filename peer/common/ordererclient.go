@@ -12,7 +12,6 @@ import (
 	"github.com/hyperledger/fabric/core/comm"
 	ab "github.com/hyperledger/fabric/protos/orderer"
 	"github.com/pkg/errors"
-	tls "github.com/tjfoc/gmtls"
 )
 
 // OrdererClient represents a client for communicating with an ordering
@@ -62,6 +61,6 @@ func (oc *OrdererClient) Deliver() (ab.AtomicBroadcast_DeliverClient, error) {
 }
 
 // Certificate returns the TLS client certificate (if available)
-func (oc *OrdererClient) Certificate() tls.Certificate {
+func (oc *OrdererClient) Certificate() interface{} {
 	return oc.commonClient.Certificate()
 }

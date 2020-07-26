@@ -58,13 +58,13 @@ func TestLoadCertificateSM2(t *testing.T) {
 	assert.NoError(t, err, "Failed to generate signed certificate")
 	// KeyUsage should be x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
 	assert.Equal(t, sm2.KeyUsageDigitalSignature|sm2.KeyUsageKeyEncipherment,
-		cert.KeyUsage)
-	assert.Contains(t, cert.ExtKeyUsage, sm2.ExtKeyUsageAny)
+		cert.(*sm2.Certificate).KeyUsage)
+	assert.Contains(t, cert.(*sm2.Certificate).ExtKeyUsage, sm2.ExtKeyUsageAny)
 
 	loadedCert, err := ca.LoadCertificateSM2(certDir)
 	assert.NotNil(t, loadedCert, "Should load cert")
-	assert.Equal(t, cert.SerialNumber, loadedCert.SerialNumber, "Should have same serial number")
-	assert.Equal(t, cert.Subject.CommonName, loadedCert.Subject.CommonName, "Should have same CN")
+	assert.Equal(t, cert.(*sm2.Certificate).SerialNumber, loadedCert.SerialNumber, "Should have same serial number")
+	assert.Equal(t, cert.(*sm2.Certificate).Subject.CommonName, loadedCert.Subject.CommonName, "Should have same CN")
 	cleanup(testDir)
 }
 
@@ -84,18 +84,18 @@ func TestNewCA(t *testing.T) {
 	assert.Equal(t, true, checkForFile(pemFile),
 		"Expected to find file "+pemFile)
 
-	assert.NotEmpty(t, rootCA.SignCert.Subject.Country, "country cannot be empty.")
-	assert.Equal(t, testCountry, rootCA.SignCert.Subject.Country[0], "Failed to match country")
-	assert.NotEmpty(t, rootCA.SignCert.Subject.Province, "province cannot be empty.")
-	assert.Equal(t, testProvince, rootCA.SignCert.Subject.Province[0], "Failed to match province")
-	assert.NotEmpty(t, rootCA.SignCert.Subject.Locality, "locality cannot be empty.")
-	assert.Equal(t, testLocality, rootCA.SignCert.Subject.Locality[0], "Failed to match locality")
-	assert.NotEmpty(t, rootCA.SignCert.Subject.OrganizationalUnit, "organizationalUnit cannot be empty.")
-	assert.Equal(t, testOrganizationalUnit, rootCA.SignCert.Subject.OrganizationalUnit[0], "Failed to match organizationalUnit")
-	assert.NotEmpty(t, rootCA.SignCert.Subject.StreetAddress, "streetAddress cannot be empty.")
-	assert.Equal(t, testStreetAddress, rootCA.SignCert.Subject.StreetAddress[0], "Failed to match streetAddress")
-	assert.NotEmpty(t, rootCA.SignCert.Subject.PostalCode, "postalCode cannot be empty.")
-	assert.Equal(t, testPostalCode, rootCA.SignCert.Subject.PostalCode[0], "Failed to match postalCode")
+	assert.NotEmpty(t, rootCA.SignCert.(*sm2.Certificate).Subject.Country, "country cannot be empty.")
+	assert.Equal(t, testCountry, rootCA.SignCert.(*sm2.Certificate).Subject.Country[0], "Failed to match country")
+	assert.NotEmpty(t, rootCA.SignCert.(*sm2.Certificate).Subject.Province, "province cannot be empty.")
+	assert.Equal(t, testProvince, rootCA.SignCert.(*sm2.Certificate).Subject.Province[0], "Failed to match province")
+	assert.NotEmpty(t, rootCA.SignCert.(*sm2.Certificate).Subject.Locality, "locality cannot be empty.")
+	assert.Equal(t, testLocality, rootCA.SignCert.(*sm2.Certificate).Subject.Locality[0], "Failed to match locality")
+	assert.NotEmpty(t, rootCA.SignCert.(*sm2.Certificate).Subject.OrganizationalUnit, "organizationalUnit cannot be empty.")
+	assert.Equal(t, testOrganizationalUnit, rootCA.SignCert.(*sm2.Certificate).Subject.OrganizationalUnit[0], "Failed to match organizationalUnit")
+	assert.NotEmpty(t, rootCA.SignCert.(*sm2.Certificate).Subject.StreetAddress, "streetAddress cannot be empty.")
+	assert.Equal(t, testStreetAddress, rootCA.SignCert.(*sm2.Certificate).Subject.StreetAddress[0], "Failed to match streetAddress")
+	assert.NotEmpty(t, rootCA.SignCert.(*sm2.Certificate).Subject.PostalCode, "postalCode cannot be empty.")
+	assert.Equal(t, testPostalCode, rootCA.SignCert.(*sm2.Certificate).Subject.PostalCode[0], "Failed to match postalCode")
 
 	cleanup(testDir)
 
@@ -124,27 +124,27 @@ func TestGenerateSignCertificate(t *testing.T) {
 	assert.NoError(t, err, "Failed to generate signed certificate")
 	// KeyUsage should be x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment
 	assert.Equal(t, sm2.KeyUsageDigitalSignature|sm2.KeyUsageKeyEncipherment,
-		cert.KeyUsage)
-	assert.Contains(t, cert.ExtKeyUsage, sm2.ExtKeyUsageAny)
+		cert.(*sm2.Certificate).KeyUsage)
+	assert.Contains(t, cert.(*sm2.Certificate).ExtKeyUsage, sm2.ExtKeyUsageAny)
 
 	cert, err = rootCA.SignCertificate(certDir, testName, nil, nil, sm2PubKey,
 		x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
 	assert.NoError(t, err, "Failed to generate signed certificate")
-	assert.Equal(t, 0, len(cert.ExtKeyUsage))
+	assert.Equal(t, 0, len(cert.(*sm2.Certificate).ExtKeyUsage))
 
 	// make sure ous are correctly set
 	ous := []string{"TestOU", "PeerOU"}
 	cert, err = rootCA.SignCertificate(certDir, testName, ous, nil, sm2PubKey,
 		x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
-	assert.Contains(t, cert.Subject.OrganizationalUnit, ous[0])
-	assert.Contains(t, cert.Subject.OrganizationalUnit, ous[1])
+	assert.Contains(t, cert.(*sm2.Certificate).Subject.OrganizationalUnit, ous[0])
+	assert.Contains(t, cert.(*sm2.Certificate).Subject.OrganizationalUnit, ous[1])
 
 	// make sure sans are correctly set
 	sans := []string{testName2, testIP}
 	cert, err = rootCA.SignCertificate(certDir, testName, nil, sans, sm2PubKey,
 		x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{})
-	assert.Contains(t, cert.DNSNames, testName2)
-	assert.Contains(t, cert.IPAddresses, net.ParseIP(testIP).To4())
+	assert.Contains(t, cert.(*sm2.Certificate).DNSNames, testName2)
+	assert.Contains(t, cert.(*sm2.Certificate).IPAddresses, net.ParseIP(testIP).To4())
 
 	// check to make sure the signed public key was stored
 	pemFile := filepath.Join(certDir, testName+"-cert.pem")

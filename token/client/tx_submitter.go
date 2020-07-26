@@ -7,6 +7,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/utils"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmtls"
 )
 
 var logger = flogging.MustGetLogger("token.client")
@@ -178,12 +180,23 @@ func (s *TxSubmitter) CreateTxEnvelope(txBytes []byte) (string, *common.Envelope
 	var err error
 	// check for client certificate and compute SHA2-256 on certificate if present
 	cert := s.OrdererClient.Certificate()
-	if cert != nil && len(cert.Certificate) > 0 {
-		tlsCertHash, err = factory.GetDefault().Hash(cert.Certificate[0], &bccsp.SM3Opts{})
-		if err != nil {
-			err = errors.New("failed to compute SM3 on client certificate")
-			logger.Errorf("%s", err)
-			return "", nil, err
+	if factory.GetDefault().GetProviderName() == "SW" {
+		if cert != nil && cert.(*tls.Certificate) != nil && len(cert.(*tls.Certificate).Certificate) > 0 {
+			tlsCertHash, err = factory.GetDefault().Hash(cert.(*tls.Certificate).Certificate[0], &bccsp.SHA256Opts{})
+			if err != nil {
+				err = errors.New("failed to compute SHA256 on client certificate")
+				logger.Errorf("%s", err)
+				return "", nil, err
+			}
+		}
+	} else {
+		if cert != nil && cert.(*gmtls.Certificate) != nil && len(cert.(*gmtls.Certificate).Certificate) > 0 {
+			tlsCertHash, err = factory.GetDefault().Hash(cert.(*gmtls.Certificate).Certificate[0], &bccsp.SM3Opts{})
+			if err != nil {
+				err = errors.New("failed to compute SM3 on client certificate")
+				logger.Errorf("%s", err)
+				return "", nil, err
+			}
 		}
 	}
 

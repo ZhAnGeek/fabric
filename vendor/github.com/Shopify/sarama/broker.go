@@ -1,6 +1,7 @@
 package sarama
 
 import (
+	"crypto/tls"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -10,8 +11,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/rcrowley/go-metrics"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 )
 
 // Broker represents a single Kafka broker connection. All operations on this object are entirely concurrency-safe.
@@ -90,7 +92,11 @@ func (b *Broker) Open(conf *Config) error {
 		}
 
 		if conf.Net.TLS.Enable {
-			b.conn, b.connErr = tls.DialWithDialer(&dialer, "tcp", b.addr, conf.Net.TLS.Config)
+			if factory.GetDefault().GetProviderName() == "SW" {
+				b.conn, b.connErr = tls.DialWithDialer(&dialer, "tcp", b.addr, conf.Net.TLS.Config.(*tls.Config))
+			} else {
+				b.conn, b.connErr = gmtls.DialWithDialer(&dialer, "tcp", b.addr, conf.Net.TLS.Config.(*gmtls.Config))
+			}
 		} else {
 			b.conn, b.connErr = dialer.Dial("tcp", b.addr)
 		}

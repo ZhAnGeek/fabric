@@ -17,10 +17,12 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/hyperledger/fabric/core/comm"
 	"github.com/hyperledger/fabric/protos/orderer"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmsm/sm2"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
@@ -733,7 +735,11 @@ func commonNameFromContext(ctx context.Context) string {
 	if cert == nil {
 		return "unidentified node"
 	}
-	return cert.Subject.CommonName
+	if factory.GetDefault().GetProviderName() == "SW" {
+		return cert.(*x509.Certificate).Subject.CommonName
+	} else {
+		return cert.(*sm2.Certificate).Subject.CommonName
+	}
 }
 
 type streamsMapperReporter struct {

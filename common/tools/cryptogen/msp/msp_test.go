@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/tjfoc/gmsm/sm2"
+
 	"github.com/hyperledger/fabric/common/tools/cryptogen/ca"
 	"github.com/hyperledger/fabric/common/tools/cryptogen/msp"
 	fabricmsp "github.com/hyperledger/fabric/msp"
@@ -50,18 +52,18 @@ func testGenerateLocalMSP(t *testing.T, nodeOUs bool) {
 	tlsCA, err := ca.NewCA(tlsCADir, testCAOrg, testCAName, testCountry, testProvince, testLocality, testOrganizationalUnit, testStreetAddress, testPostalCode)
 	assert.NoError(t, err, "Error generating CA")
 
-	assert.NotEmpty(t, signCA.SignCert.Subject.Country, "country cannot be empty.")
-	assert.Equal(t, testCountry, signCA.SignCert.Subject.Country[0], "Failed to match country")
-	assert.NotEmpty(t, signCA.SignCert.Subject.Province, "province cannot be empty.")
-	assert.Equal(t, testProvince, signCA.SignCert.Subject.Province[0], "Failed to match province")
-	assert.NotEmpty(t, signCA.SignCert.Subject.Locality, "locality cannot be empty.")
-	assert.Equal(t, testLocality, signCA.SignCert.Subject.Locality[0], "Failed to match locality")
-	assert.NotEmpty(t, signCA.SignCert.Subject.OrganizationalUnit, "organizationalUnit cannot be empty.")
-	assert.Equal(t, testOrganizationalUnit, signCA.SignCert.Subject.OrganizationalUnit[0], "Failed to match organizationalUnit")
-	assert.NotEmpty(t, signCA.SignCert.Subject.StreetAddress, "streetAddress cannot be empty.")
-	assert.Equal(t, testStreetAddress, signCA.SignCert.Subject.StreetAddress[0], "Failed to match streetAddress")
-	assert.NotEmpty(t, signCA.SignCert.Subject.PostalCode, "postalCode cannot be empty.")
-	assert.Equal(t, testPostalCode, signCA.SignCert.Subject.PostalCode[0], "Failed to match postalCode")
+	assert.NotEmpty(t, signCA.SignCert.(*sm2.Certificate).Subject.Country, "country cannot be empty.")
+	assert.Equal(t, testCountry, signCA.SignCert.(*sm2.Certificate).Subject.Country[0], "Failed to match country")
+	assert.NotEmpty(t, signCA.SignCert.(*sm2.Certificate).Subject.Province, "province cannot be empty.")
+	assert.Equal(t, testProvince, signCA.SignCert.(*sm2.Certificate).Subject.Province[0], "Failed to match province")
+	assert.NotEmpty(t, signCA.SignCert.(*sm2.Certificate).Subject.Locality, "locality cannot be empty.")
+	assert.Equal(t, testLocality, signCA.SignCert.(*sm2.Certificate).Subject.Locality[0], "Failed to match locality")
+	assert.NotEmpty(t, signCA.SignCert.(*sm2.Certificate).Subject.OrganizationalUnit, "organizationalUnit cannot be empty.")
+	assert.Equal(t, testOrganizationalUnit, signCA.SignCert.(*sm2.Certificate).Subject.OrganizationalUnit[0], "Failed to match organizationalUnit")
+	assert.NotEmpty(t, signCA.SignCert.(*sm2.Certificate).Subject.StreetAddress, "streetAddress cannot be empty.")
+	assert.Equal(t, testStreetAddress, signCA.SignCert.(*sm2.Certificate).Subject.StreetAddress[0], "Failed to match streetAddress")
+	assert.NotEmpty(t, signCA.SignCert.(*sm2.Certificate).Subject.PostalCode, "postalCode cannot be empty.")
+	assert.Equal(t, testPostalCode, signCA.SignCert.(*sm2.Certificate).Subject.PostalCode[0], "Failed to match postalCode")
 
 	// generate local MSP for nodeType=PEER
 	err = msp.GenerateLocalMSP(testDir, testName, nil, signCA, tlsCA, msp.PEER, nodeOUs)

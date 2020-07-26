@@ -15,7 +15,6 @@ import (
 	"github.com/hyperledger/fabric/protos/common"
 	ab "github.com/hyperledger/fabric/protos/orderer"
 	"github.com/pkg/errors"
-	tls "github.com/tjfoc/gmtls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
@@ -37,7 +36,7 @@ type OrdererClient interface {
 	NewBroadcast(ctx context.Context, opts ...grpc.CallOption) (Broadcast, error)
 
 	// Certificate returns tls certificate for the orderer client
-	Certificate() *tls.Certificate
+	Certificate() interface{}
 }
 
 // ordererClient implements OrdererClient interface
@@ -91,7 +90,7 @@ func (oc *ordererClient) NewBroadcast(ctx context.Context, opts ...grpc.CallOpti
 	return broadcast, nil
 }
 
-func (oc *ordererClient) Certificate() *tls.Certificate {
+func (oc *ordererClient) Certificate() interface{} {
 	cert := oc.grpcClient.Certificate()
 	return &cert
 }

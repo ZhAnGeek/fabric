@@ -13,7 +13,6 @@ import (
 	"github.com/hyperledger/fabric/msp"
 	m "github.com/hyperledger/fabric/protos/msp"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 // GenerateIssuerKey invokes Idemix library to generate an issuer (CA) signing key pair.
@@ -41,7 +40,7 @@ func GenerateIssuerKey() ([]byte, []byte, error) {
 // GenerateSignerConfig creates a new signer config.
 // It generates a fresh user secret and issues a credential
 // with four attributes (described above) using the CA's key pair.
-func GenerateSignerConfig(roleMask int, ouString string, enrollmentId string, revocationHandle int, key *idemix.IssuerKey, revKey *sm2.PrivateKey) ([]byte, error) {
+func GenerateSignerConfig(roleMask int, ouString string, enrollmentId string, revocationHandle int, key *idemix.IssuerKey, revKey interface{}) ([]byte, error) {
 	attrs := make([]*FP256BN.BIG, 4)
 
 	if ouString == "" {

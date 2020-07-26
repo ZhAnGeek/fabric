@@ -57,6 +57,7 @@ import (
 	"github.com/onsi/gomega/gexec"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+	"github.com/tjfoc/gmsm/sm2"
 	"google.golang.org/grpc"
 )
 
@@ -476,7 +477,7 @@ func createClientAndService(t *testing.T, testdir string) (*client, *service) {
 
 	authInfo := &AuthInfo{
 		ClientIdentity:    signer.Creator,
-		ClientTlsCertHash: util.ComputeSHA256(clientKeyPair.TLSCert.Raw),
+		ClientTlsCertHash: util.ComputeSHA256(clientKeyPair.TLSCert.(*sm2.Certificate).Raw),
 	}
 
 	dialer, err := comm.NewGRPCClient(comm.ClientConfig{

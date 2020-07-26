@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/bccsp"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	cb "github.com/hyperledger/fabric/protos/common"
 	mspprotos "github.com/hyperledger/fabric/protos/msp"
 	ab "github.com/hyperledger/fabric/protos/orderer"
@@ -26,8 +27,6 @@ const (
 
 	// AdminsPolicyKey is the key used for the read policy
 	AdminsPolicyKey = "Admins"
-
-	defaultHashingAlgorithm = bccsp.SM3
 
 	defaultBlockDataHashingStructureWidth = math.MaxUint32
 )
@@ -71,11 +70,20 @@ func ConsortiumValue(name string) *StandardConfigValue {
 // HashingAlgorithm returns the only currently valid hashing algorithm.
 // It is a value for the /Channel group.
 func HashingAlgorithmValue() *StandardConfigValue {
-	return &StandardConfigValue{
-		key: HashingAlgorithmKey,
-		value: &cb.HashingAlgorithm{
-			Name: defaultHashingAlgorithm,
-		},
+	if factory.GetDefault().GetProviderName() == "SW" {
+		return &StandardConfigValue{
+			key: HashingAlgorithmKey,
+			value: &cb.HashingAlgorithm{
+				Name: bccsp.SHA256,
+			},
+		}
+	} else {
+		return &StandardConfigValue{
+			key: HashingAlgorithmKey,
+			value: &cb.HashingAlgorithm{
+				Name: bccsp.SM3,
+			},
+		}
 	}
 }
 

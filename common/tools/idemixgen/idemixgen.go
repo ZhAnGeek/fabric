@@ -12,6 +12,8 @@ package main
 // the Identity Mixer MSP
 
 import (
+	"crypto/ecdsa"
+	"crypto/x509"
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
@@ -19,6 +21,7 @@ import (
 	"path/filepath"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/tools/idemixgen/idemixca"
 	"github.com/hyperledger/fabric/common/tools/idemixgen/metadata"
 	"github.com/hyperledger/fabric/idemix"
@@ -39,6 +42,7 @@ var (
 	app = kingpin.New("idemixgen", "Utility for generating key material to be used with the Identity Mixer MSP in Hyperledger Fabric")
 
 	outputDir = app.Flag("output", "The output directory in which to place artifacts").Default("idemix-config").String()
+	bccsp     = app.Flag("bccsp", "The blockchain crypto service provider name").Default("GM").String()
 
 	genIssuerKey            = app.Command("ca-keygen", "Generate CA key material")
 	genSignerConfig         = app.Command("signerconfig", "Generate a default signer for this Idemix MSP")
@@ -52,6 +56,23 @@ var (
 
 func main() {
 	app.HelpFlag.Short('h')
+	if *bccsp == "SW" {
+		factory.InitFactories(&factory.FactoryOpts{
+			ProviderName: "SW",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SHA2",
+				SecLevel:   256,
+			},
+		})
+	} else {
+		factory.InitFactories(&factory.FactoryOpts{
+			ProviderName: "GM",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SM3",
+				SecLevel:   256,
+			},
+		})
+	}
 
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 
@@ -59,15 +80,29 @@ func main() {
 		isk, ipk, err := idemixca.GenerateIssuerKey()
 		handleError(err)
 
-		revocationKey, err := idemix.GenerateLongTermRevocationKey()
-		handleError(err)
-		encodedRevocationSK, err := sm2.MarshalECPrivateKey(revocationKey)
-		handleError(err)
-		pemEncodedRevocationSK := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: encodedRevocationSK})
-		handleError(err)
-		encodedRevocationPK, err := sm2.MarshalPKIXPublicKey(revocationKey.Public())
-		handleError(err)
-		pemEncodedRevocationPK := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: encodedRevocationPK})
+		var pemEncodedRevocationSK []byte
+		var pemEncodedRevocationPK []byte
+		if factory.GetDefault().GetProviderName() == "SW" {
+			revocationKey, err := idemix.GenerateLongTermRevocationKey()
+			handleError(err)
+			encodedRevocationSK, err := x509.MarshalECPrivateKey(revocationKey.(*ecdsa.PrivateKey))
+			handleError(err)
+			pemEncodedRevocationSK = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: encodedRevocationSK})
+			handleError(err)
+			encodedRevocationPK, err := x509.MarshalPKIXPublicKey(revocationKey.(*ecdsa.PrivateKey).Public())
+			handleError(err)
+			pemEncodedRevocationPK = pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: encodedRevocationPK})
+		} else {
+			revocationKey, err := idemix.GenerateLongTermRevocationKey()
+			handleError(err)
+			encodedRevocationSK, err := sm2.MarshalECPrivateKey(revocationKey.(*sm2.PrivateKey))
+			handleError(err)
+			pemEncodedRevocationSK = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: encodedRevocationSK})
+			handleError(err)
+			encodedRevocationPK, err := sm2.MarshalPKIXPublicKey(revocationKey.(*sm2.PrivateKey).Public())
+			handleError(err)
+			pemEncodedRevocationPK = pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: encodedRevocationPK})
+		}
 
 		// Prevent overwriting the existing key
 		path := filepath.Join(*outputDir, IdemixDirIssuer)
@@ -135,7 +170,7 @@ func readIssuerKey() *idemix.IssuerKey {
 	return key
 }
 
-func readRevocationKey() *sm2.PrivateKey {
+func readRevocationKey() interface{} {
 	path := filepath.Join(*outputDir, IdemixDirIssuer, IdemixConfigRevocationKey)
 	keyBytes, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -146,10 +181,15 @@ func readRevocationKey() *sm2.PrivateKey {
 	if block == nil {
 		handleError(errors.Errorf("failed to decode ECDSA private key"))
 	}
-	key, err := sm2.ParseECPrivateKey(block.Bytes)
-	handleError(err)
-
-	return key
+	if factory.GetDefault().GetProviderName() == "SW" {
+		key, err := x509.ParseECPrivateKey(block.Bytes)
+		handleError(err)
+		return key
+	} else {
+		key, err := sm2.ParseECPrivateKey(block.Bytes)
+		handleError(err)
+		return key
+	}
 }
 
 // checkDirectoryNotExists checks whether a directory with the given path already exists and exits if this is the case

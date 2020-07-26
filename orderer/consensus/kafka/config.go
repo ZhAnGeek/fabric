@@ -7,9 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 package kafka
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+
+	"github.com/hyperledger/fabric/bccsp/factory"
 	localconfig "github.com/hyperledger/fabric/orderer/common/localconfig"
 	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
+	"github.com/tjfoc/gmtls"
 
 	"github.com/Shopify/sarama"
 )
@@ -40,23 +44,44 @@ func newBrokerConfig(
 
 	brokerConfig.Net.TLS.Enable = tlsConfig.Enabled
 	if brokerConfig.Net.TLS.Enable {
-		// create public/private key pair structure
-		keyPair, err := tls.X509KeyPair([]byte(tlsConfig.Certificate), []byte(tlsConfig.PrivateKey))
-		if err != nil {
-			logger.Panic("Unable to decode public/private key pair:", err)
-		}
-		// create root CA pool
-		rootCAs := sm2.NewCertPool()
-		for _, certificate := range tlsConfig.RootCAs {
-			if !rootCAs.AppendCertsFromPEM([]byte(certificate)) {
-				logger.Panic("Unable to parse the root certificate authority certificates (Kafka.Tls.RootCAs)")
+		if factory.GetDefault().GetProviderName() == "SW" {
+			// create public/private key pair structure
+			keyPair, err := tls.X509KeyPair([]byte(tlsConfig.Certificate), []byte(tlsConfig.PrivateKey))
+			if err != nil {
+				logger.Panic("Unable to decode public/private key pair:", err)
 			}
-		}
-		brokerConfig.Net.TLS.Config = &tls.Config{
-			Certificates: []tls.Certificate{keyPair},
-			RootCAs:      rootCAs,
-			MinVersion:   tls.VersionTLS12,
-			MaxVersion:   0, // Latest supported TLS version
+			// create root CA pool
+			rootCAs := x509.NewCertPool()
+			for _, certificate := range tlsConfig.RootCAs {
+				if !rootCAs.AppendCertsFromPEM([]byte(certificate)) {
+					logger.Panic("Unable to parse the root certificate authority certificates (Kafka.Tls.RootCAs)")
+				}
+			}
+			brokerConfig.Net.TLS.Config = &tls.Config{
+				Certificates: []tls.Certificate{keyPair},
+				RootCAs:      rootCAs,
+				MinVersion:   tls.VersionTLS12,
+				MaxVersion:   0, // Latest supported TLS version
+			}
+		} else {
+			// create public/private key pair structure
+			keyPair, err := gmtls.X509KeyPair([]byte(tlsConfig.Certificate), []byte(tlsConfig.PrivateKey))
+			if err != nil {
+				logger.Panic("Unable to decode public/private key pair:", err)
+			}
+			// create root CA pool
+			rootCAs := sm2.NewCertPool()
+			for _, certificate := range tlsConfig.RootCAs {
+				if !rootCAs.AppendCertsFromPEM([]byte(certificate)) {
+					logger.Panic("Unable to parse the root certificate authority certificates (Kafka.Tls.RootCAs)")
+				}
+			}
+			brokerConfig.Net.TLS.Config = &gmtls.Config{
+				Certificates: []gmtls.Certificate{keyPair},
+				RootCAs:      rootCAs,
+				MinVersion:   gmtls.VersionTLS12,
+				MaxVersion:   0, // Latest supported TLS version
+			}
 		}
 	}
 	brokerConfig.Net.SASL.Enable = saslPlain.Enabled

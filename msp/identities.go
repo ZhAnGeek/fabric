@@ -9,6 +9,7 @@ package msp
 import (
 	"crypto"
 	"crypto/rand"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
 	"fmt"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/bccsp"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/hyperledger/fabric/protos/msp"
 	"github.com/pkg/errors"
@@ -30,7 +32,7 @@ type identity struct {
 	id *IdentityIdentifier
 
 	// cert contains the x.509 certificate that signs the public key of this instance
-	cert *sm2.Certificate
+	cert interface{}
 
 	// this is the public key of this instance
 	pk bccsp.Key
@@ -39,13 +41,14 @@ type identity struct {
 	msp *bccspmsp
 }
 
-func newIdentity(cert *sm2.Certificate, pk bccsp.Key, msp *bccspmsp) (Identity, error) {
+func newIdentity(cert interface{}, pk bccsp.Key, msp *bccspmsp) (Identity, error) {
 	if mspIdentityLogger.IsEnabledFor(zapcore.DebugLevel) {
 		mspIdentityLogger.Debugf("Creating identity instance for cert %s", certToPEM(cert))
 	}
+	var err error
 
 	// Sanitize first the certificate
-	cert, err := msp.sanitizeCert(cert)
+	cert, err = msp.sanitizeCert(cert)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +61,12 @@ func newIdentity(cert *sm2.Certificate, pk bccsp.Key, msp *bccspmsp) (Identity, 
 		return nil, errors.WithMessage(err, "failed getting hash function options")
 	}
 
-	digest, err := msp.bccsp.Hash(cert.Raw, hashOpt)
+	var digest []byte
+	if factory.GetDefault().GetProviderName() == "SW" {
+		digest, err = msp.bccsp.Hash(cert.(*x509.Certificate).Raw, hashOpt)
+	} else {
+		digest, err = msp.bccsp.Hash(cert.(*sm2.Certificate).Raw, hashOpt)
+	}
 	if err != nil {
 		return nil, errors.WithMessage(err, "failed hashing raw certificate to compute the id of the IdentityIdentifier")
 	}
@@ -72,7 +80,11 @@ func newIdentity(cert *sm2.Certificate, pk bccsp.Key, msp *bccspmsp) (Identity, 
 
 // ExpiresAt returns the time at which the Identity expires.
 func (id *identity) ExpiresAt() time.Time {
-	return id.cert.NotAfter
+	if factory.GetDefault().GetProviderName() == "SW" {
+		return id.cert.(*x509.Certificate).NotAfter
+	} else {
+		return id.cert.(*sm2.Certificate).NotAfter
+	}
 }
 
 // SatisfiesPrincipal returns null if this instance matches the supplied principal or an error otherwise
@@ -120,11 +132,20 @@ func (id *identity) GetOrganizationalUnits() []*OUIdentifier {
 	}
 
 	var res []*OUIdentifier
-	for _, unit := range id.cert.Subject.OrganizationalUnit {
-		res = append(res, &OUIdentifier{
-			OrganizationalUnitIdentifier: unit,
-			CertifiersIdentifier:         cid,
-		})
+	if factory.GetDefault().GetProviderName() == "SW" {
+		for _, unit := range id.cert.(*x509.Certificate).Subject.OrganizationalUnit {
+			res = append(res, &OUIdentifier{
+				OrganizationalUnitIdentifier: unit,
+				CertifiersIdentifier:         cid,
+			})
+		}
+	} else {
+		for _, unit := range id.cert.(*sm2.Certificate).Subject.OrganizationalUnit {
+			res = append(res, &OUIdentifier{
+				OrganizationalUnitIdentifier: unit,
+				CertifiersIdentifier:         cid,
+			})
+		}
 	}
 
 	return res
@@ -186,7 +207,12 @@ func (id *identity) Verify(msg []byte, sig []byte) error {
 func (id *identity) Serialize() ([]byte, error) {
 	// mspIdentityLogger.Infof("Serializing identity %s", id.id)
 
-	pb := &pem.Block{Bytes: id.cert.Raw, Type: "CERTIFICATE"}
+	var pb *pem.Block
+	if factory.GetDefault().GetProviderName() == "SW" {
+		pb = &pem.Block{Bytes: id.cert.(*x509.Certificate).Raw, Type: "CERTIFICATE"}
+	} else {
+		pb = &pem.Block{Bytes: id.cert.(*sm2.Certificate).Raw, Type: "CERTIFICATE"}
+	}
 	pemBytes := pem.EncodeToMemory(pb)
 	if pemBytes == nil {
 		return nil, errors.New("encoding of identity failed")
@@ -222,7 +248,7 @@ type signingidentity struct {
 	signer crypto.Signer
 }
 
-func newSigningIdentity(cert *sm2.Certificate, pk bccsp.Key, signer crypto.Signer, msp *bccspmsp) (SigningIdentity, error) {
+func newSigningIdentity(cert interface{}, pk bccsp.Key, signer crypto.Signer, msp *bccspmsp) (SigningIdentity, error) {
 	//mspIdentityLogger.Infof("Creating signing identity instance for ID %s", id)
 	mspId, err := newIdentity(cert, pk, msp)
 	if err != nil {

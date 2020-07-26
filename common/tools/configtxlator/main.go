@@ -15,6 +15,7 @@ import (
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/hyperledger/fabric/common/tools/configtxlator/metadata"
 	"github.com/hyperledger/fabric/common/tools/configtxlator/rest"
@@ -40,6 +41,7 @@ var (
 	hostname = start.Flag("hostname", "The hostname or IP on which the REST server will listen").Default("0.0.0.0").String()
 	port     = start.Flag("port", "The port on which the REST server will listen").Default("7059").Int()
 	cors     = start.Flag("CORS", "Allowable CORS domains, e.g. '*' or 'www.example.com' (may be repeated).").Strings()
+	bccsp    = start.Flag("bccsp", "Blockchain cryptographic service provider name").Default("GM").String()
 
 	protoEncode       = app.Command("proto_encode", "Converts a JSON document to protobuf.")
 	protoEncodeType   = protoEncode.Flag("type", "The type of protobuf structure to encode to.  For example, 'common.Config'.").Required().String()
@@ -67,6 +69,23 @@ func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	// "start" command
 	case start.FullCommand():
+		if *bccsp == "SW" {
+			factory.InitFactories(&factory.FactoryOpts{
+				ProviderName: "SW",
+				SwOpts: &factory.SwOpts{
+					HashFamily: "SHA2",
+					SecLevel:   256,
+				},
+			})
+		} else {
+			factory.InitFactories(&factory.FactoryOpts{
+				ProviderName: "GM",
+				SwOpts: &factory.SwOpts{
+					HashFamily: "SM3",
+					SecLevel:   256,
+				},
+			})
+		}
 		startServer(fmt.Sprintf("%s:%d", *hostname, *port), *cors)
 	// "proto_encode" command
 	case protoEncode.FullCommand():

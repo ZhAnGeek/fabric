@@ -185,7 +185,7 @@ func handshaker(port int, endpoint string, comm Comm, t *testing.T, connMutator 
 		InsecureSkipVerify: true,
 	}
 	if connType == mutualTLS {
-		tlsCfg.Certificates = []tls.Certificate{cert}
+		tlsCfg.Certificates = []tls.Certificate{cert.(tls.Certificate)}
 	}
 	ta := credentials.NewTLS(tlsCfg)
 	secureOpts := grpc.WithTransportCredentials(ta)
@@ -579,7 +579,7 @@ func TestCloseConn(t *testing.T) {
 	cert := GenerateCertificatesOrPanic()
 	tlsCfg := &tls.Config{
 		InsecureSkipVerify: true,
-		Certificates:       []tls.Certificate{cert},
+		Certificates:       []tls.Certificate{cert.(tls.Certificate)},
 	}
 	ta := credentials.NewTLS(tlsCfg)
 
@@ -1003,7 +1003,7 @@ func establishSession(t *testing.T, port int) (proto.Gossip_GossipStreamClient, 
 	cert := GenerateCertificatesOrPanic()
 	secureOpts := grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{
 		InsecureSkipVerify: true,
-		Certificates:       []tls.Certificate{cert},
+		Certificates:       []tls.Certificate{cert.(tls.Certificate)},
 	}))
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -1022,7 +1022,7 @@ func establishSession(t *testing.T, port int) (proto.Gossip_GossipStreamClient, 
 		return nil, err
 	}
 
-	clientCertHash := certHashFromRawCert(cert.Certificate[0])
+	clientCertHash := certHashFromRawCert(cert.(tls.Certificate).Certificate[0])
 	pkiID := common.PKIidType([]byte{1, 2, 3})
 	c := &commImpl{}
 	assert.NoError(t, err, "%v", err)

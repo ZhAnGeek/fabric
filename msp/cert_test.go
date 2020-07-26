@@ -92,26 +92,26 @@ func TestSanitizeCert(t *testing.T) {
 func TestCertExpiration(t *testing.T) {
 	msp := &bccspmsp{}
 	msp.opts = &sm2.VerifyOptions{}
-	msp.opts.DNSName = "test.example.com"
+	msp.opts.(*sm2.VerifyOptions).DNSName = "test.example.com"
 
 	// Certificate is in the future
 	_, cert := generateSelfSignedCert(t, time.Now().Add(24*time.Hour))
-	msp.opts.Roots = sm2.NewCertPool()
-	msp.opts.Roots.AddCert(cert)
+	msp.opts.(*sm2.VerifyOptions).Roots = sm2.NewCertPool()
+	msp.opts.(*sm2.VerifyOptions).Roots.AddCert(cert)
 	_, err := msp.getUniqueValidationChain(cert, msp.getValidityOptsForCert(cert))
 	assert.NoError(t, err)
 
 	// Certificate is in the past
 	_, cert = generateSelfSignedCert(t, time.Now().Add(-24*time.Hour))
-	msp.opts.Roots = sm2.NewCertPool()
-	msp.opts.Roots.AddCert(cert)
+	msp.opts.(*sm2.VerifyOptions).Roots = sm2.NewCertPool()
+	msp.opts.(*sm2.VerifyOptions).Roots.AddCert(cert)
 	_, err = msp.getUniqueValidationChain(cert, msp.getValidityOptsForCert(cert))
 	assert.NoError(t, err)
 
 	// Certificate is in the middle
 	_, cert = generateSelfSignedCert(t, time.Now())
-	msp.opts.Roots = sm2.NewCertPool()
-	msp.opts.Roots.AddCert(cert)
+	msp.opts.(*sm2.VerifyOptions).Roots = sm2.NewCertPool()
+	msp.opts.(*sm2.VerifyOptions).Roots.AddCert(cert)
 	_, err = msp.getUniqueValidationChain(cert, msp.getValidityOptsForCert(cert))
 	assert.NoError(t, err)
 }

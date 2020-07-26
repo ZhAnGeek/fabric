@@ -37,7 +37,7 @@ func TestIdemixCa(t *testing.T) {
 	err = proto.Unmarshal(ipkBytes, ipk)
 	assert.NoError(t, err)
 
-	encodedRevocationPK, err := sm2.MarshalSm2PublicKey(&revocationkey.PublicKey)
+	encodedRevocationPK, err := sm2.MarshalSm2PublicKey(&revocationkey.(*sm2.PrivateKey).PublicKey)
 	assert.NoError(t, err)
 	pemEncodedRevocationPK := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: encodedRevocationPK})
 

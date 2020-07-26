@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/tools/cryptogen/ca"
 	"github.com/hyperledger/fabric/common/tools/cryptogen/csp"
 	"github.com/hyperledger/fabric/common/tools/cryptogen/metadata"
@@ -205,6 +206,7 @@ var (
 	gen           = app.Command("generate", "Generate key material")
 	outputDir     = gen.Flag("output", "The output directory in which to place artifacts").Default("crypto-config").String()
 	genConfigFile = gen.Flag("config", "The configuration template to use").File()
+	bccsp         = gen.Flag("bccsp", "Blockchain cryptographic service provider name").Default("GM").String()
 
 	showtemplate = app.Command("showtemplate", "Show the default configuration template")
 
@@ -384,6 +386,23 @@ func generate() {
 	if err != nil {
 		fmt.Printf("Error reading config: %s", err)
 		os.Exit(-1)
+	}
+	if *bccsp == "SW" {
+		factory.InitFactories(&factory.FactoryOpts{
+			ProviderName: "SW",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SHA2",
+				SecLevel:   256,
+			},
+		})
+	} else {
+		factory.InitFactories(&factory.FactoryOpts{
+			ProviderName: "GM",
+			SwOpts: &factory.SwOpts{
+				HashFamily: "SM3",
+				SecLevel:   256,
+			},
+		})
 	}
 
 	for _, orgSpec := range config.PeerOrgs {
@@ -721,21 +740,38 @@ func printVersion() {
 }
 
 func getCA(caDir string, spec OrgSpec, name string) *ca.CA {
-	priv, _, err := csp.LoadPrivateKey(caDir)
-	if err != nil {
-		panic(err)
-	}
-	cert, _ := ca.LoadCertificateSM2(caDir)
+	if factory.GetDefault().GetProviderName() == "SW" {
+		_, signer, _ := csp.LoadPrivateKey(caDir)
+		cert, _ := ca.LoadCertificateECDSA(caDir)
 
-	return &ca.CA{
-		Name:               name,
-		Country:            spec.CA.Country,
-		Province:           spec.CA.Province,
-		Locality:           spec.CA.Locality,
-		OrganizationalUnit: spec.CA.OrganizationalUnit,
-		StreetAddress:      spec.CA.StreetAddress,
-		PostalCode:         spec.CA.PostalCode,
-		SignCert:           cert,
-		SignKey:            priv,
+		return &ca.CA{
+			Name:               name,
+			Signer:             signer,
+			SignCert:           cert,
+			Country:            spec.CA.Country,
+			Province:           spec.CA.Province,
+			Locality:           spec.CA.Locality,
+			OrganizationalUnit: spec.CA.OrganizationalUnit,
+			StreetAddress:      spec.CA.StreetAddress,
+			PostalCode:         spec.CA.PostalCode,
+		}
+	} else {
+		priv, _, err := csp.LoadPrivateKey(caDir)
+		if err != nil {
+			panic(err)
+		}
+		cert, _ := ca.LoadCertificateSM2(caDir)
+
+		return &ca.CA{
+			Name:               name,
+			Country:            spec.CA.Country,
+			Province:           spec.CA.Province,
+			Locality:           spec.CA.Locality,
+			OrganizationalUnit: spec.CA.OrganizationalUnit,
+			StreetAddress:      spec.CA.StreetAddress,
+			PostalCode:         spec.CA.PostalCode,
+			SignCert:           cert,
+			SignKey:            priv,
+		}
 	}
 }

@@ -49,6 +49,10 @@ type MockBCCSP struct {
 	HashErr error
 }
 
+func (*MockBCCSP) GetProviderName() string {
+	return "MOCK"
+}
+
 func (*MockBCCSP) KeyGen(opts bccsp.KeyGenOpts) (bccsp.Key, error) {
 	panic("Not yet implemented")
 }

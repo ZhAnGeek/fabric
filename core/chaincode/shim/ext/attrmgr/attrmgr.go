@@ -29,8 +29,10 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/protos/msp"
 	"github.com/pkg/errors"
+	"github.com/tjfoc/gmsm/sm2"
 )
 
 var (
@@ -65,7 +67,7 @@ type Mgr struct{}
 
 // ProcessAttributeRequestsForCert add attributes to an X509 certificate, given
 // attribute requests and attributes.
-func (mgr *Mgr) ProcessAttributeRequestsForCert(requests []AttributeRequest, attributes []Attribute, cert *x509.Certificate) error {
+func (mgr *Mgr) ProcessAttributeRequestsForCert(requests []AttributeRequest, attributes []Attribute, cert interface{}) error {
 	attrs, err := mgr.ProcessAttributeRequests(requests, attributes)
 	if err != nil {
 		return err
@@ -102,7 +104,7 @@ func (mgr *Mgr) ProcessAttributeRequests(requests []AttributeRequest, attributes
 }
 
 // AddAttributesToCert adds public attribute info to an X509 certificate.
-func (mgr *Mgr) AddAttributesToCert(attrs *Attributes, cert *x509.Certificate) error {
+func (mgr *Mgr) AddAttributesToCert(attrs *Attributes, cert interface{}) error {
 	buf, err := json.Marshal(attrs)
 	if err != nil {
 		return errors.Wrap(err, "Failed to marshal attributes")
@@ -112,12 +114,16 @@ func (mgr *Mgr) AddAttributesToCert(attrs *Attributes, cert *x509.Certificate) e
 		Critical: false,
 		Value:    buf,
 	}
-	cert.Extensions = append(cert.Extensions, ext)
+	if factory.GetDefault().GetProviderName() == "SW" {
+		cert.(*x509.Certificate).Extensions = append(cert.(*x509.Certificate).Extensions, ext)
+	} else {
+		cert.(*sm2.Certificate).Extensions = append(cert.(*sm2.Certificate).Extensions, ext)
+	}
 	return nil
 }
 
 // GetAttributesFromCert gets the attributes from a certificate.
-func (mgr *Mgr) GetAttributesFromCert(cert *x509.Certificate) (*Attributes, error) {
+func (mgr *Mgr) GetAttributesFromCert(cert interface{}) (*Attributes, error) {
 	// Get certificate attributes from the certificate if it exists
 	buf, err := getAttributesFromCert(cert)
 	if err != nil {
@@ -227,10 +233,18 @@ func (a *Attributes) True(name string) error {
 }
 
 // Get the attribute info from a certificate extension, or return nil if not found
-func getAttributesFromCert(cert *x509.Certificate) ([]byte, error) {
-	for _, ext := range cert.Extensions {
-		if isAttrOID(ext.Id) {
-			return ext.Value, nil
+func getAttributesFromCert(cert interface{}) ([]byte, error) {
+	if factory.GetDefault().GetProviderName() == "SW" {
+		for _, ext := range cert.(*x509.Certificate).Extensions {
+			if isAttrOID(ext.Id) {
+				return ext.Value, nil
+			}
+		}
+	} else {
+		for _, ext := range cert.(*sm2.Certificate).Extensions {
+			if isAttrOID(ext.Id) {
+				return ext.Value, nil
+			}
 		}
 	}
 	return nil, nil

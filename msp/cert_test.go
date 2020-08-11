@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric/bccsp/gm"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 func TestSanitizeCertWithSM2(t *testing.T) {

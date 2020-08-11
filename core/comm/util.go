@@ -15,10 +15,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/bccsp/factory"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm3"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
-	"github.com/tjfoc/gmsm/sm3"
-	"github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 )

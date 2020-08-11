@@ -15,9 +15,9 @@ import (
 
 	"github.com/hyperledger/fabric/common/flogging/floggingtest"
 	"github.com/hyperledger/fabric/core/comm"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
 )
 
 func TestCreds(t *testing.T) {

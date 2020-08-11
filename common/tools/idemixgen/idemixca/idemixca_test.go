@@ -16,9 +16,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/idemix"
 	m "github.com/hyperledger/fabric/msp"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 var testDir = filepath.Join(os.TempDir(), "idemixca-test")

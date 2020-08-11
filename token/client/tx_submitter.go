@@ -23,8 +23,8 @@ import (
 	peercommon "github.com/hyperledger/fabric/peer/common"
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/utils"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmtls"
 )
 
 var logger = flogging.MustGetLogger("token.client")

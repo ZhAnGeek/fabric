@@ -22,8 +22,8 @@ import (
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/msp"
 	proto_utils "github.com/hyperledger/fabric/protos/utils"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 // Config holds the configuration for

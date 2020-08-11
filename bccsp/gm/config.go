@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"hash"
 
-	"github.com/tjfoc/gmsm/sm3"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm3"
 )
 
 type config struct {

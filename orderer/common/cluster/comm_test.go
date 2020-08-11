@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/common/crypto/tlsgen"

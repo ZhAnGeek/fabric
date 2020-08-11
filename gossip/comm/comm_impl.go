@@ -24,8 +24,8 @@ import (
 	"github.com/hyperledger/fabric/gossip/metrics"
 	"github.com/hyperledger/fabric/gossip/util"
 	proto "github.com/hyperledger/fabric/protos/gossip"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmtls"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 )

@@ -18,8 +18,8 @@ import (
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/bccsp/signer"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 // LoadPrivateKey loads a private key from file in keystorePath

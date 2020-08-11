@@ -12,12 +12,12 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/hyperledger/fabric/protos/token"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm3"
 	"github.com/hyperledger/fabric/token/server"
 	"github.com/hyperledger/fabric/token/server/mock"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm3"
 )
 
 var _ = Describe("Marshal", func() {

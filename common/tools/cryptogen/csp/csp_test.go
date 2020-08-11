@@ -14,8 +14,8 @@ import (
 
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/common/tools/cryptogen/csp"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 // mock implementation of bccsp.Key interface

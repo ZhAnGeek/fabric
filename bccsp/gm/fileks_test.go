@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric/bccsp/utils"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 func TestInvalidStoreKey(t *testing.T) {

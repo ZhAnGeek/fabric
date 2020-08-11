@@ -9,10 +9,10 @@ import (
 	"github.com/hyperledger/fabric/bccsp"
 	"github.com/hyperledger/fabric/bccsp/idemix/handlers"
 	"github.com/hyperledger/fabric/bccsp/idemix/handlers/mock"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm3"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm3"
 )
 
 var _ = Describe("User", func() {

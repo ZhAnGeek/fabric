@@ -18,10 +18,10 @@ import (
 	"github.com/hyperledger/fabric/common/crypto/tlsgen"
 	"github.com/hyperledger/fabric/common/flogging/floggingtest"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
+	credentials "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
-	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 )

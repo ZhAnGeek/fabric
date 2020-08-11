@@ -56,17 +56,6 @@
   revision = "cd527374f1e5bff4938207604a14f2e38a9cf512"
 
 [[projects]]
-  digest = "1:e22217b1fd7a20d7cc1ec7e49b83e63be449ad95bdc7a8dfca3d996a9014bba3"
-  name = "github.com/Shopify/sarama"
-  packages = [
-    ".",
-    "mocks",
-  ]
-  pruneopts = "NUT"
-  revision = "ec843464b50d4c8b56403ec9d589cf41ea30e722"
-  version = "v1.19.0"
-
-[[projects]]
   branch = "master"
   digest = "1:f3793f8a708522400cef1dba23385e901aede5519f68971fd69938ef330b07a1"
   name = "github.com/alecthomas/template"
@@ -957,8 +946,6 @@
     "code.cloudfoundry.org/clock",
     "code.cloudfoundry.org/clock/fakeclock",
     "github.com/Knetic/govaluate",
-    "github.com/Shopify/sarama",
-    "github.com/Shopify/sarama/mocks",
     "github.com/davecgh/go-spew/spew",
     "github.com/fsouza/go-dockerclient",
     "github.com/go-kit/kit/metrics",

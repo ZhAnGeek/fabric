@@ -32,7 +32,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 )
 
 //command line flags

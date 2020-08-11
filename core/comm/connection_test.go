@@ -17,10 +17,10 @@ import (
 	"time"
 
 	testpb "github.com/hyperledger/fabric/core/comm/testdata/grpc"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
-	"github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

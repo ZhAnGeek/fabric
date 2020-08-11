@@ -4,7 +4,7 @@ package mock
 import (
 	sync "sync"
 
-	sarama "github.com/Shopify/sarama"
+	sarama "github.com/hyperledger/fabric/third_party/github.com/Shopify/sarama"
 )
 
 type SyncProducer struct {

@@ -34,10 +34,10 @@ import (
 	"github.com/hyperledger/fabric/gossip/mocks"
 	"github.com/hyperledger/fabric/gossip/util"
 	proto "github.com/hyperledger/fabric/protos/gossip"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
+	credentials "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	tls "github.com/tjfoc/gmtls"
-	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 )
 

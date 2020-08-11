@@ -15,10 +15,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
+	credentials "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
-	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 )
 

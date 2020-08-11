@@ -18,8 +18,8 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/hyperledger/fabric/bccsp/factory"
-	"github.com/tjfoc/gmsm/sm2"
-	"github.com/tjfoc/gmtls"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"google.golang.org/grpc"
 )
 

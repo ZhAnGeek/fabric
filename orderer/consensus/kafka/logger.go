@@ -11,8 +11,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Shopify/sarama"
 	"github.com/hyperledger/fabric/common/flogging"
+	"github.com/hyperledger/fabric/third_party/github.com/Shopify/sarama"
 	"go.uber.org/zap"
 )
 

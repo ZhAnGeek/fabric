@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/stretchr/testify/assert"

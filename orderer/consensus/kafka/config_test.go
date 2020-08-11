@@ -9,11 +9,11 @@ package kafka
 import (
 	"testing"
 
-	"github.com/Shopify/sarama"
 	localconfig "github.com/hyperledger/fabric/orderer/common/localconfig"
 	"github.com/hyperledger/fabric/orderer/mocks/util"
+	"github.com/hyperledger/fabric/third_party/github.com/Shopify/sarama"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/stretchr/testify/assert"
-	tls "github.com/tjfoc/gmtls"
 )
 
 func TestBrokerConfig(t *testing.T) {

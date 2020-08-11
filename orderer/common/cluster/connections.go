@@ -14,8 +14,8 @@ import (
 
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/metrics"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
 	"google.golang.org/grpc"
 )
 

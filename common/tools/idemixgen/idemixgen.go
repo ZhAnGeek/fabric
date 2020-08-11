@@ -26,8 +26,8 @@ import (
 	"github.com/hyperledger/fabric/common/tools/idemixgen/metadata"
 	"github.com/hyperledger/fabric/idemix"
 	"github.com/hyperledger/fabric/msp"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 

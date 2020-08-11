@@ -18,10 +18,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Shopify/sarama"
 	version "github.com/hashicorp/go-version"
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/flogging"
+	"github.com/hyperledger/fabric/third_party/github.com/Shopify/sarama"
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"

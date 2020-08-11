@@ -19,10 +19,10 @@ import (
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/orderer"
 	"github.com/hyperledger/fabric/protos/utils"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
+	credentials "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
-	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 )
 

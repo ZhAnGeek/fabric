@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric/bccsp/factory"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/rcrowley/go-metrics"
-	"github.com/tjfoc/gmtls"
 )
 
 // Broker represents a single Kafka broker connection. All operations on this object are entirely concurrency-safe.

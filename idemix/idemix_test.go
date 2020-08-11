@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric-amcl/amcl/FP256BN"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 func TestIdemix(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/Shopify/sarama"
+	"github.com/hyperledger/fabric/third_party/github.com/Shopify/sarama"
 )
 
 // Consumer implements sarama's Consumer interface for testing purposes.

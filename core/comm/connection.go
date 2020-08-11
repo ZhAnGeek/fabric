@@ -22,9 +22,9 @@ import (
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/flogging"
 	"github.com/hyperledger/fabric/core/config"
-	"github.com/tjfoc/gmsm/sm2"
-	"github.com/tjfoc/gmtls"
-	"github.com/tjfoc/gmtls/gmcredentials"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )

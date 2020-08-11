@@ -18,7 +18,7 @@ import (
 	"github.com/hyperledger/fabric/common/tools/cryptogen/ca"
 	"github.com/hyperledger/fabric/common/tools/cryptogen/csp"
 	fabricmsp "github.com/hyperledger/fabric/msp"
-	"github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"gopkg.in/yaml.v2"
 )
 

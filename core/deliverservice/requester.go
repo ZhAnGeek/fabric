@@ -28,7 +28,7 @@ import (
 	"github.com/hyperledger/fabric/protos/common"
 	"github.com/hyperledger/fabric/protos/orderer"
 	"github.com/hyperledger/fabric/protos/utils"
-	"github.com/tjfoc/gmtls"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 )
 
 type blocksRequester struct {

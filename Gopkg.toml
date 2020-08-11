@@ -20,10 +20,6 @@ noverify = [
   version = "3.0.0"
 
 [[constraint]]
-  name = "github.com/Shopify/sarama"
-  version = "1.19.0"
-
-[[constraint]]
   name = "github.com/davecgh/go-spew"
   version = "1.1.0"
 

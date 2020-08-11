@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric/bccsp/factory"
-	"github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 )
 
 func (p *CertKeyPair) PrivKeyString() string {

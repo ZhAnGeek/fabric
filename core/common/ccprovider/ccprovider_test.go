@@ -17,9 +17,9 @@ import (
 	"github.com/hyperledger/fabric/common/chaincode"
 	"github.com/hyperledger/fabric/core/common/ccprovider"
 	"github.com/hyperledger/fabric/protos/peer"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm3"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm3"
 )
 
 func TestInstalledCCs(t *testing.T) {

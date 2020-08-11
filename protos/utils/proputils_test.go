@@ -23,8 +23,8 @@ import (
 	"github.com/hyperledger/fabric/protos/common"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/utils"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm3"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm3"
 )
 
 func createCIS() *pb.ChaincodeInvocationSpec {

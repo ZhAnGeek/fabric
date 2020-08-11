@@ -16,9 +16,9 @@ import (
 
 	"github.com/hyperledger/fabric/gossip/util"
 	proto "github.com/hyperledger/fabric/protos/gossip"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
+	credentials "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"github.com/stretchr/testify/assert"
-	tls "github.com/tjfoc/gmtls"
-	credentials "github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc"
 )
 

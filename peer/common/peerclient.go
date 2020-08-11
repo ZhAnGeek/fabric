@@ -18,9 +18,9 @@ import (
 	"github.com/hyperledger/fabric/core/config"
 	"github.com/hyperledger/fabric/peer/common/api"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"github.com/tjfoc/gmtls"
 )
 
 // PeerClient represents a client for communicating with a peer

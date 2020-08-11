@@ -12,12 +12,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/crypto/tlsgen"
 	"github.com/hyperledger/fabric/common/util"
-	"github.com/tjfoc/gmtls/gmcredentials"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls/gmcredentials"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
 )

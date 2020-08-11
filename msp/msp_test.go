@@ -27,8 +27,8 @@ import (
 	"github.com/hyperledger/fabric/bccsp/utils"
 	"github.com/hyperledger/fabric/core/config/configtest"
 	"github.com/hyperledger/fabric/protos/msp"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 var notACert = `-----BEGIN X509 CRL-----

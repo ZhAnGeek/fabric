@@ -18,7 +18,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/tjfoc/gmtls"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/hyperledger/fabric/bccsp/factory"

@@ -10,9 +10,9 @@ import (
 	"encoding/pem"
 	"testing"
 
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
-	tls "github.com/tjfoc/gmtls"
 )
 
 func TestCertEncoding(t *testing.T) {

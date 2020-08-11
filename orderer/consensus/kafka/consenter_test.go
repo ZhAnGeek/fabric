@@ -23,8 +23,8 @@ import (
 	ab "github.com/hyperledger/fabric/protos/orderer"
 	"github.com/hyperledger/fabric/protos/utils"
 
-	"github.com/Shopify/sarama"
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/fabric/third_party/github.com/Shopify/sarama"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/hyperledger/fabric/core/comm"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	tls "github.com/tjfoc/gmtls"
 )
 
 func TestCacheConfigurationNegative(t *testing.T) {

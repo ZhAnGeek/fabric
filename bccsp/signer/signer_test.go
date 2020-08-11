@@ -21,8 +21,8 @@ import (
 	"testing"
 
 	"github.com/hyperledger/fabric/bccsp/mocks"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 func TestInitFailures(t *testing.T) {

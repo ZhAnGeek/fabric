@@ -19,7 +19,7 @@ package utils
 import (
 	"crypto/x509"
 
-	"github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 )
 
 // DERToX509Certificate converts der to x509

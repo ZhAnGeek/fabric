@@ -18,8 +18,8 @@ import (
 	ab "github.com/hyperledger/fabric/protos/orderer"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/utils"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmtls"
 )
 
 var (

@@ -9,7 +9,7 @@ import (
 	"math/big"
 
 	"github.com/hyperledger/fabric/bccsp"
-	"github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 )
 
 type sm2Signer struct{}

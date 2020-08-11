@@ -29,8 +29,8 @@ import (
 	"github.com/hyperledger/fabric/bccsp/factory"
 	"github.com/hyperledger/fabric/common/attrmgr"
 	"github.com/hyperledger/fabric/protos/msp"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/pkg/errors"
-	"github.com/tjfoc/gmsm/sm2"
 )
 
 // GetID returns the ID associated with the invoking identity.  This ID

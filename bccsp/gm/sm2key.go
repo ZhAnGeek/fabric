@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/hyperledger/fabric/bccsp"
-	"github.com/tjfoc/gmsm/sm2"
-	"github.com/tjfoc/gmsm/sm3"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm3"
 )
 
 type sm2PrivateKey struct {

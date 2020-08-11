@@ -29,12 +29,12 @@ import (
 	common2 "github.com/hyperledger/fabric/protos/common"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"github.com/hyperledger/fabric/protos/utils"
+	tls "github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 	. "github.com/onsi/gomega"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	tls "github.com/tjfoc/gmtls"
 )
 
 func TestCheckChaincodeCmdParamsWithNewCallingSchema(t *testing.T) {

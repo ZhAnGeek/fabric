@@ -54,10 +54,10 @@ import (
 	"github.com/hyperledger/fabric/protos/gossip"
 	msprotos "github.com/hyperledger/fabric/protos/msp"
 	"github.com/hyperledger/fabric/protos/utils"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
 	"github.com/onsi/gomega/gexec"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/tjfoc/gmsm/sm2"
 	"google.golang.org/grpc"
 )
 

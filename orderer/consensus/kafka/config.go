@@ -12,10 +12,10 @@ import (
 
 	"github.com/hyperledger/fabric/bccsp/factory"
 	localconfig "github.com/hyperledger/fabric/orderer/common/localconfig"
-	"github.com/tjfoc/gmsm/sm2"
-	"github.com/tjfoc/gmtls"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmsm/sm2"
+	"github.com/hyperledger/fabric/third_party/github.com/tjfoc/gmtls"
 
-	"github.com/Shopify/sarama"
+	"github.com/hyperledger/fabric/third_party/github.com/Shopify/sarama"
 )
 
 func newBrokerConfig(

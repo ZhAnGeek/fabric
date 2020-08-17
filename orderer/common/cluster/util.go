@@ -129,9 +129,9 @@ func (dialer *PredicateDialer) Dial(address string, verifyFunc interface{}) (*gr
 	dialer.lock.RUnlock()
 
 	if factory.GetDefault().GetProviderName() == "SW" {
-		cfg.SecOpts.VerifyCertificate = verifyFunc.(RemoteVerifier)
+		cfg.SecOpts.VerifyCertificate = verifyFunc.(func([][]byte, [][]*x509.Certificate) error)
 	} else {
-		cfg.SecOpts.VerifyGMCertificate = verifyFunc.(GMRemoteVerifier)
+		cfg.SecOpts.VerifyGMCertificate = verifyFunc.(func([][]byte, [][]*sm2.Certificate) error)
 	}
 	client, err := comm.NewGRPCClient(cfg)
 	if err != nil {

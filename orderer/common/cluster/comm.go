@@ -322,51 +322,99 @@ func (c *Comm) updateStubInMapping(channel string, mapping MemberMapping, node R
 // a stub atomically.
 func (c *Comm) createRemoteContext(stub *Stub, channel string) func() (*RemoteContext, error) {
 	return func() (*RemoteContext, error) {
-		cert, err := x509.ParseCertificate(stub.ServerTLSCert)
-		if err != nil {
-			pemString := string(pem.EncodeToMemory(&pem.Block{Bytes: stub.ServerTLSCert}))
-			c.Logger.Errorf("Invalid DER for channel %s, endpoint %s, ID %d: %v", channel, stub.Endpoint, stub.ID, pemString)
-			return nil, errors.Wrap(err, "invalid certificate DER")
-		}
-
-		c.Logger.Debug("Connecting to", stub.RemoteNode, "for channel", channel)
-
-		conn, err := c.Connections.Connection(stub.Endpoint, stub.ServerTLSCert)
-		if err != nil {
-			c.Logger.Warningf("Unable to obtain connection to %d(%s) (channel %s): %v", stub.ID, stub.Endpoint, channel, err)
-			return nil, err
-		}
-
-		probeConnection := func(conn *grpc.ClientConn) error {
-			connState := conn.GetState()
-			if connState == connectivity.Connecting {
-				return errors.Errorf("connection to %d(%s) is in state %s", stub.ID, stub.Endpoint, connState)
+		if factory.GetDefault().GetProviderName() == "SW" {
+			cert, err := x509.ParseCertificate(stub.ServerTLSCert)
+			if err != nil {
+				pemString := string(pem.EncodeToMemory(&pem.Block{Bytes: stub.ServerTLSCert}))
+				c.Logger.Errorf("Invalid DER for channel %s, endpoint %s, ID %d: %v", channel, stub.Endpoint, stub.ID, pemString)
+				return nil, errors.Wrap(err, "invalid certificate DER")
 			}
-			return nil
-		}
 
-		clusterClient := orderer.NewClusterClient(conn)
+			c.Logger.Debug("Connecting to", stub.RemoteNode, "for channel", channel)
 
-		workerCountReporter := workerCountReporter{
-			channel: channel,
-		}
+			conn, err := c.Connections.Connection(stub.Endpoint, stub.ServerTLSCert)
+			if err != nil {
+				c.Logger.Warningf("Unable to obtain connection to %d(%s) (channel %s): %v", stub.ID, stub.Endpoint, channel, err)
+				return nil, err
+			}
 
-		rc := &RemoteContext{
-			expiresAt:                        cert.NotAfter,
-			minimumExpirationWarningInterval: c.MinimumExpirationWarningInterval,
-			certExpWarningThreshold:          c.CertExpWarningThreshold,
-			workerCountReporter:              workerCountReporter,
-			Channel:                          channel,
-			Metrics:                          c.Metrics,
-			SendBuffSize:                     c.SendBufferSize,
-			shutdownSignal:                   c.shutdownSignal,
-			endpoint:                         stub.Endpoint,
-			Logger:                           c.Logger,
-			ProbeConn:                        probeConnection,
-			conn:                             conn,
-			Client:                           clusterClient,
+			probeConnection := func(conn *grpc.ClientConn) error {
+				connState := conn.GetState()
+				if connState == connectivity.Connecting {
+					return errors.Errorf("connection to %d(%s) is in state %s", stub.ID, stub.Endpoint, connState)
+				}
+				return nil
+			}
+
+			clusterClient := orderer.NewClusterClient(conn)
+
+			workerCountReporter := workerCountReporter{
+				channel: channel,
+			}
+
+			rc := &RemoteContext{
+				expiresAt:                        cert.NotAfter,
+				minimumExpirationWarningInterval: c.MinimumExpirationWarningInterval,
+				certExpWarningThreshold:          c.CertExpWarningThreshold,
+				workerCountReporter:              workerCountReporter,
+				Channel:                          channel,
+				Metrics:                          c.Metrics,
+				SendBuffSize:                     c.SendBufferSize,
+				shutdownSignal:                   c.shutdownSignal,
+				endpoint:                         stub.Endpoint,
+				Logger:                           c.Logger,
+				ProbeConn:                        probeConnection,
+				conn:                             conn,
+				Client:                           clusterClient,
+			}
+			return rc, nil
+		} else {
+			cert, err := sm2.ParseCertificate(stub.ServerTLSCert)
+			if err != nil {
+				pemString := string(pem.EncodeToMemory(&pem.Block{Bytes: stub.ServerTLSCert}))
+				c.Logger.Errorf("Invalid DER for channel %s, endpoint %s, ID %d: %v", channel, stub.Endpoint, stub.ID, pemString)
+				return nil, errors.Wrap(err, "invalid certificate DER")
+			}
+
+			c.Logger.Debug("Connecting to", stub.RemoteNode, "for channel", channel)
+
+			conn, err := c.Connections.Connection(stub.Endpoint, stub.ServerTLSCert)
+			if err != nil {
+				c.Logger.Warningf("Unable to obtain connection to %d(%s) (channel %s): %v", stub.ID, stub.Endpoint, channel, err)
+				return nil, err
+			}
+
+			probeConnection := func(conn *grpc.ClientConn) error {
+				connState := conn.GetState()
+				if connState == connectivity.Connecting {
+					return errors.Errorf("connection to %d(%s) is in state %s", stub.ID, stub.Endpoint, connState)
+				}
+				return nil
+			}
+
+			clusterClient := orderer.NewClusterClient(conn)
+
+			workerCountReporter := workerCountReporter{
+				channel: channel,
+			}
+
+			rc := &RemoteContext{
+				expiresAt:                        cert.NotAfter,
+				minimumExpirationWarningInterval: c.MinimumExpirationWarningInterval,
+				certExpWarningThreshold:          c.CertExpWarningThreshold,
+				workerCountReporter:              workerCountReporter,
+				Channel:                          channel,
+				Metrics:                          c.Metrics,
+				SendBuffSize:                     c.SendBufferSize,
+				shutdownSignal:                   c.shutdownSignal,
+				endpoint:                         stub.Endpoint,
+				Logger:                           c.Logger,
+				ProbeConn:                        probeConnection,
+				conn:                             conn,
+				Client:                           clusterClient,
+			}
+			return rc, nil
 		}
-		return rc, nil
 	}
 }
 

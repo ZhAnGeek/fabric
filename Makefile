@@ -88,7 +88,7 @@ EXECUTABLES ?= go docker git curl
 K := $(foreach exec,$(EXECUTABLES),\
 	$(if $(shell which $(exec)),some string,$(error "No $(exec) in PATH: Check dependencies")))
 
-GOSHIM_DEPS = $(shell ./scripts/goListFiles.sh $(PKGNAME)/core/chaincode/shim)
+GOSHIM_DEPS = $(shell go mod vendor && export GO111MODULE=off && ./scripts/goListFiles.sh $(PKGNAME)/core/chaincode/shim)
 PROTOS = $(shell git ls-files *.proto | grep -Ev 'vendor/|testdata/')
 # No sense rebuilding when non production code is changed
 PROJECT_FILES = $(shell git ls-files  | grep -v ^test | grep -v ^unit-test | \
@@ -236,6 +236,7 @@ $(BUILD_DIR)/docker/bin/%: $(PROJECT_FILES)
 		-v $(abspath $(BUILD_DIR)/docker/$(TARGET)/pkg):/opt/gopath/pkg \
 		-v $(abspath $(BUILD_DIR)/docker/gocache):/opt/gopath/cache \
 		-e GOCACHE=/opt/gopath/cache \
+		-e GOPROXY=https://goproxy.io,direct \
 		$(BASE_DOCKER_NS)/fabric-baseimage:$(BASE_DOCKER_TAG) \
 		go install -tags "$(GO_TAGS)" -ldflags "$(DOCKER_GO_LDFLAGS)" $(pkgmap.$(@F))
 	@touch $@

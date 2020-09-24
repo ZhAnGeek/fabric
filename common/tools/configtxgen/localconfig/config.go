@@ -386,6 +386,8 @@ loop:
 	// Additional, consensus type-dependent initialization goes here
 	// Also using this to panic on unknown orderer type.
 	switch ord.OrdererType {
+	case "pbft":
+		// nothing to be done here
 	case "solo":
 		// nothing to be done here
 	case "kafka":

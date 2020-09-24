@@ -36,6 +36,8 @@ const (
 var logger = flogging.MustGetLogger("common.tools.configtxgen.encoder")
 
 const (
+	// ConsensusTypePbft identifies the pbft consensus implementation.
+	ConsensusTypePbft = "pbft"
 	// ConsensusTypeSolo identifies the solo consensus implementation.
 	ConsensusTypeSolo = "solo"
 	// ConsensusTypeKafka identifies the Kafka-based consensus implementation.
@@ -217,6 +219,7 @@ func NewOrdererGroup(conf *genesisconfig.Orderer) (*cb.ConfigGroup, error) {
 	var err error
 
 	switch conf.OrdererType {
+	case ConsensusTypePbft:
 	case ConsensusTypeSolo:
 	case ConsensusTypeKafka:
 		addValue(ordererGroup, channelconfig.KafkaBrokersValue(conf.Kafka.Brokers), channelconfig.AdminsPolicyKey)

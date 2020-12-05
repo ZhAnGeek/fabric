@@ -51,3 +51,12 @@ func (s *HttpServer) HttpCheckPoint(w http.ResponseWriter, r *http.Request) {
 	}
 	s.checkPointRecv <- &msg
 }
+
+func (s *HttpServer) HttpViewChange(w http.ResponseWriter, r *http.Request) {
+	var msg message.ViewChange
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		log.Printf("[Http Error] %s", err)
+		return
+	}
+	s.viewChangeRecv <- &msg
+}

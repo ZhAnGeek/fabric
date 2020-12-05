@@ -62,6 +62,13 @@ type Commit struct {
 	Identify Identify `json:"id"`
 }
 
+// ViewChange
+type ViewChange struct {
+	View     View     `json:"view"`
+	Identify Identify `json:"id"`
+	Digest   string `json:"digest"`
+}
+
 // Reply
 type Reply struct {
 	View      View      `json:"view"`
@@ -75,6 +82,10 @@ type CheckPoint struct {
 	Sequence Sequence `json:"sequence"`
 	Digest   string	  `json:"digest"`
 	Id       Identify `json:"nodeID"`
+}
+
+func (view View) NextView () View {
+	return view + 1
 }
 
 // return byte, msg, digest, error
@@ -125,6 +136,21 @@ func NewCommitMsg(id Identify, msg *Prepare) ([]byte, *Commit, error) {
 		return []byte{}, nil, err
 	}
 	return content, commit, nil
+}
+
+// return byte, commit, error
+func NewViewChangeMsg(id Identify, view View) ([]byte, *ViewChange, error) {
+	digest, _ := Digest(id)
+	viewchange := &ViewChange{
+		View:     view,
+		Identify: id,
+		Digest: digest,
+	}
+	content, err := json.Marshal(viewchange)
+	if err != nil {
+		return []byte{}, nil, err
+	}
+	return content, viewchange, nil
 }
 
 func ViewSequenceString(view View, seq Sequence) string {

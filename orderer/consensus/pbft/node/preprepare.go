@@ -75,6 +75,8 @@ func (n *Node) prePrepareRecvAndPrepareSendThread() {
 			n.buffer.BufferPrepareMsg(prepare)
 			// boradcast prepare message
 			n.BroadCast(content, server.PrepareEntry)
+			// view expire
+			go n.viewChangeExpire()
 			// when commit and prepare vote success but not recv pre-prepare
 			if n.buffer.IsReadyToExecute(msg.Digest, n.cfg.FaultNum, msg.View, msg.Sequence) {
 				n.readytoExecute(msg.Digest)

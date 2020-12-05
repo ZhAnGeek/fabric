@@ -18,6 +18,10 @@ type Buffer struct {
 	prepareState  map[string]bool
 	prepareLocker *sync.RWMutex
 
+	viewChangeSet    map[string]map[Identify]bool
+	viewChangeState  map[string]bool
+	viewChangeLocker *sync.RWMutex
+
 	commitSet    map[string]map[Identify]bool
 	commitState  map[string]bool
 	commitLocker *sync.RWMutex
@@ -323,4 +327,34 @@ func (b *Buffer) IsTrueOfCheckPointMsg(digest string, f uint) (ret bool) {
 func (b *Buffer) Show() {
 	log.Printf("[Buffer] node buffer size: pre-prepare(%d) prepare(%d) commit(%d)",
 		len(b.prePrepareBuffer), len(b.prepareSet), len(b.commitSet))
+}
+
+// buffer about viewChange
+func (b *Buffer) BufferViewChangeMsg(msg *ViewChange) {
+	b.viewChangeLocker.Lock()
+	if _, ok := b.viewChangeSet[msg.Digest]; !ok {
+		b.viewChangeSet[msg.Digest] = make(map[Identify]bool)
+	}
+	b.viewChangeSet[msg.Digest][msg.Identify] = true
+	b.viewChangeLocker.Unlock()
+}
+
+func (b *Buffer) ClearViewChangeMsg(digest string) {
+	b.viewChangeLocker.Lock()
+	delete(b.viewChangeSet, digest)
+	delete(b.viewChangeState, digest)
+	b.viewChangeLocker.Unlock()
+}
+
+func (b *Buffer) IsTrueOfViewChangeMsg(digest string, falut uint) bool {
+	b.viewChangeLocker.Lock()
+	num := uint(len(b.viewChangeSet[digest]))
+	_, ok := b.viewChangeState[digest]
+	if num < 3*falut || ok {
+		b.viewChangeLocker.Unlock()
+		return false
+	}
+	b.viewChangeState[digest] = true
+	b.viewChangeLocker.Unlock()
+	return true
 }

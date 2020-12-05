@@ -15,6 +15,8 @@ func (n *Node) requestRecvThread() {
 			}else {
 				// TODO just send it to primary
 			}
+			// TODO now just reject
+			continue
 		}
 		n.buffer.AppendToRequestQueue(msg)
 		n.prePrepareSendNotify <- true

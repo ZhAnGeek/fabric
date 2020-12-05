@@ -30,9 +30,11 @@ type Node struct {
 	prepareRecv    chan *message.Prepare
 	commitRecv     chan *message.Commit
 	checkPointRecv chan *message.CheckPoint
+	viewChangeRecv chan *message.ViewChange
 
 	prePrepareSendNotify chan bool
 	executeNotify        chan bool
+	noViewChangeNotify chan bool
 
 	supports             map[string]consensus.ConsenterSupport
 }
@@ -60,6 +62,7 @@ func NewNode(cfg *cmd.SharedConfig, support consensus.ConsenterSupport) *Node {
 		prepareRecv:    make(chan *message.Prepare),
 		commitRecv:     make(chan *message.Commit),
 		checkPointRecv: make(chan *message.CheckPoint),
+		viewChangeRecv: make(chan *message.ViewChange),
 		// chan for notify pre-prepare send thread
 		prePrepareSendNotify: make(chan bool),
 		// chan for notify execute op and reply thread
@@ -81,7 +84,7 @@ func (n *Node) RegisterChain(support consensus.ConsenterSupport) {
 
 func (n *Node) Run() {
 	// first register chan for server
-	n.server.RegisterChan(n.requestRecv, n.prePrepareRecv, n.prepareRecv, n.commitRecv, n.checkPointRecv)
+	n.server.RegisterChan(n.requestRecv, n.prePrepareRecv, n.prepareRecv, n.commitRecv, n.checkPointRecv, n.viewChangeRecv)
 	go n.server.Run()
 	go n.requestRecvThread()
 	go n.prePrepareSendThread()
@@ -90,4 +93,5 @@ func (n *Node) Run() {
 	go n.commitRecvThread()
 	go n.executeAndReplyThread()
 	go n.checkPointRecvThread()
+	go n.viewChangeRecvThread()
 }

@@ -16,16 +16,26 @@ func (n *Node) prepareRecvAndCommitSendThread() {
 			// buffer the prepare msg
 			n.buffer.BufferPrepareMsg(msg)
 			// verify send commit msg
-			if n.buffer.IsTrueOfPrepareMsg(msg.Digest, n.cfg.FaultNum) {
-				log.Printf("[Prepare] prepare msg(%d) vote success and to send commit", msg.Sequence)
+			if !n.IsPrimary() {
 				content, msg, err := message.NewCommitMsg(n.id, msg)
+				if err != nil {
+					continue
+				}
+				n.Primary(content, server.CommitEntry)
+				n.GetAck(content, server.CommitACKEntry, func() {
+					// if commit success, it is time to execute
+					n.readytoExecute(msg.Digest)
+				})
+			}
+			if n.IsPrimary() && n.buffer.IsTrueOfPrepareMsg(msg.Digest, n.cfg.FaultNum) {
+				log.Printf("[Prepare] prepare msg(%d) vote success and to send commit", msg.Sequence)
+				_, msg, err := message.NewCommitMsg(n.id, msg)
 				if err != nil {
 					continue
 				}
 				// buffer commit msg
 				n.buffer.BufferCommitMsg(msg)
 				// TODO broadcast error when buffer the commit msg
-				n.BroadCast(content, server.CommitEntry)
 			}
 			if n.buffer.IsReadyToExecute(msg.Digest, n.cfg.FaultNum, msg.View, msg.Sequence) {
 				n.readytoExecute(msg.Digest)

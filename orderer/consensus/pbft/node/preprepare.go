@@ -74,7 +74,16 @@ func (n *Node) prePrepareRecvAndPrepareSendThread() {
 			// buffer the prepare msg, verify 2f backup
 			n.buffer.BufferPrepareMsg(prepare)
 			// boradcast prepare message
-			n.BroadCast(content, server.PrepareEntry)
+			n.Primary(content, server.PrepareEntry)
+			n.GetAck(server.PrepareACKEntry, func() {
+				// if prepare success, it is time to commit
+				log.Printf("[Prepare] prepare msg(%d) vote success and to send commit", msg.Sequence)
+				_, msg, err := message.NewCommitMsg(n.id, prepare)
+				if err != nil {
+					return
+				}
+				n.commitRecv <- msg
+			})
 			// view expire
 			go n.viewChangeExpire()
 			// when commit and prepare vote success but not recv pre-prepare

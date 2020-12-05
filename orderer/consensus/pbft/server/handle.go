@@ -60,3 +60,29 @@ func (s *HttpServer) HttpViewChange(w http.ResponseWriter, r *http.Request) {
 	}
 	s.viewChangeRecv <- &msg
 }
+
+func (s *HttpServer) HttpCommitAck(w http.ResponseWriter, r *http.Request) {
+	var msg message.Commit
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		log.Printf("[Http Error] %s", err)
+		return
+	}
+	if s.node.IsCommitAck(&msg) {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
+
+func (s *HttpServer) HttpPrepareAck(w http.ResponseWriter, r *http.Request) {
+	var msg message.Prepare
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		log.Printf("[Http Error] %s", err)
+		return
+	}
+	if s.node.IsPrepareAck(&msg) {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}

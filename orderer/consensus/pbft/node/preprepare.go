@@ -75,7 +75,7 @@ func (n *Node) prePrepareRecvAndPrepareSendThread() {
 			n.buffer.BufferPrepareMsg(prepare)
 			// boradcast prepare message
 			n.Primary(content, server.PrepareEntry)
-			n.GetAck(server.PrepareACKEntry, func() {
+			n.GetAck(content, server.PrepareACKEntry, func() {
 				// if prepare success, it is time to commit
 				log.Printf("[Prepare] prepare msg(%d) vote success and to send commit", msg.Sequence)
 				_, msg, err := message.NewCommitMsg(n.id, prepare)

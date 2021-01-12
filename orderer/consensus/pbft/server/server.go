@@ -3,7 +3,6 @@ package server
 import (
 	"github.com/hyperledger/fabric/orderer/consensus/pbft/cmd"
 	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
-	"github.com/hyperledger/fabric/orderer/consensus/pbft/node"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,6 +19,11 @@ const (
 	PrepareACKEntry  = "/prepare-ack"
 )
 
+type WebNode interface {
+	IsPrepareAck(m *message.Prepare) bool
+	IsCommitAck(m *message.Commit) bool
+}
+
 // http 监听请求
 type HttpServer struct {
 	port   int
@@ -31,7 +35,7 @@ type HttpServer struct {
 	commitRecv     chan *message.Commit
 	checkPointRecv chan *message.CheckPoint
 	viewChangeRecv chan *message.ViewChange
-	node *node.Node
+	node WebNode
 }
 
 func NewServer(cfg *cmd.SharedConfig) *HttpServer {
@@ -45,13 +49,14 @@ func NewServer(cfg *cmd.SharedConfig) *HttpServer {
 
 // config server: to register the handle chan
 func (s *HttpServer) RegisterChan(r chan *message.Request, pre chan *message.PrePrepare,
-	p chan *message.Prepare, c chan *message.Commit, cp chan *message.CheckPoint, vc chan *message.ViewChange, n *node.Node) {
+	p chan *message.Prepare, c chan *message.Commit, cp chan *message.CheckPoint, vc chan *message.ViewChange, n WebNode) {
 	log.Printf("[Server] register the chan for listen func")
 	s.requestRecv    = r
 	s.prePrepareRecv = pre
 	s.prepareRecv    = p
 	s.commitRecv     = c
 	s.checkPointRecv = cp
+	s.viewChangeRecv = vc
 	s.node = n
 }
 

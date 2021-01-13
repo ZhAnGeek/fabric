@@ -7,5 +7,7 @@ func (n *Node) readytoExecute(digest string) {
 	// notify ExcuteThread
 	n.executeNum.Dec()
 	n.executeNotify<-true
-	n.noViewChangeNotify<-true
+	if !n.IsPrimary() {
+		n.noViewChangeNotify <- true
+	}
 }

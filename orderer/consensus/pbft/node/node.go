@@ -67,6 +67,7 @@ func NewNode(cfg *cmd.SharedConfig, support consensus.ConsenterSupport) *Node {
 		prePrepareSendNotify: make(chan bool),
 		// chan for notify execute op and reply thread
 		executeNotify:        make(chan bool, 100),
+		noViewChangeNotify:   make(chan bool),
 		supports: 			  make(map[string]consensus.ConsenterSupport),
 	}
 	log.Printf("[Node] the node id:%d, view:%d, fault number:%d\n", node.id, node.view, node.faultNum)

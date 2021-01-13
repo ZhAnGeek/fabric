@@ -5,5 +5,5 @@ import (
 )
 
 func (n *Node) IsCommitAck(msg *message.Commit) bool {
-	return n.buffer.IsReadyToExecute(msg.Digest, n.cfg.FaultNum, msg.View, msg.Sequence)
+	return n.buffer.IsCommitStateReady(msg.Digest)
 }

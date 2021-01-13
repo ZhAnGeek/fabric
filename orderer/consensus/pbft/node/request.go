@@ -8,6 +8,7 @@ func (n *Node) requestRecvThread() {
 	log.Printf("[Node] start recv the request thread")
 	for {
 		msg := <- n.requestRecv
+		log.Printf("[Node] msg := %v", msg)
 		// check is primary
 		if !n.IsPrimary() {
 			if n.lastReply.Equal(msg) {

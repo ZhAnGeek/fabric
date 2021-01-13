@@ -7,6 +7,7 @@ import (
 	"github.com/hyperledger/fabric/orderer/consensus/pbft/message"
 	"github.com/hyperledger/fabric/orderer/consensus/pbft/node"
 	cb "github.com/hyperledger/fabric/protos/common"
+	"github.com/prometheus/common/log"
 	"time"
 )
 
@@ -87,6 +88,7 @@ func (ch *Chain) Order(env *cb.Envelope, configSeq uint64) error {
 // 接收配置
 func (ch *Chain) Configure(config *cb.Envelope, configSeq uint64) error {
 	logger.Info("Config")
+	log.Infof("Config")
 	select {
 	case <-ch.exitChan:
 		logger.Info("[CHAIN error exit config]")
@@ -104,5 +106,7 @@ func (ch *Chain) Configure(config *cb.Envelope, configSeq uint64) error {
 		ID:        0,
 	}
 	ch.pbftNode.SendPrimary(req)
+	log.Infof("Send Primary")
+
 	return nil
 }

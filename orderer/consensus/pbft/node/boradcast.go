@@ -16,6 +16,7 @@ func (n *Node) SendPrimary(msg *message.Request) {
 		log.Printf("error to marshal json")
 		return
 	}
+	log.Printf(n.table[n.GetPrimary()] + server.RequestEntry)
 	go SendPost(content, n.table[n.GetPrimary()] + server.RequestEntry)
 }
 

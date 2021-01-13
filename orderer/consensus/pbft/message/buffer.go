@@ -51,6 +51,10 @@ func NewBuffer() *Buffer {
 		commitState:  make(map[string]bool),
 		commitLocker: new(sync.RWMutex),
 
+		viewChangeSet:    make(map[string]map[Identify]bool),
+		viewChangeState:  make(map[string]bool),
+		viewChangeLocker: new(sync.RWMutex),
+
 		executeQueue:  make([]*PrePrepare, 0),
 		executeLocker: new(sync.RWMutex),
 
@@ -141,6 +145,13 @@ func (b *Buffer) ClearPrepareMsg(digest string) {
 	b.prepareLocker.Unlock()
 }
 
+func (b *Buffer) IsPrepareStateReady(digest string) bool {
+	b.prepareLocker.Lock()
+	_, ok := b.prepareState[digest]
+	b.prepareLocker.Unlock()
+	return ok
+}
+
 func (b *Buffer) IsTrueOfPrepareMsg(digest string, falut uint) bool {
 	b.prepareLocker.Lock()
 	num := uint(len(b.prepareSet[digest]))
@@ -169,6 +180,13 @@ func (b *Buffer) ClearCommitMsg(digest string) {
 	delete(b.commitSet, digest)
 	delete(b.commitState, digest)
 	b.commitLocker.Unlock()
+}
+
+func (b *Buffer) IsCommitStateReady(digest string) bool {
+	b.commitLocker.Lock()
+	_, ok := b.commitState[digest]
+	b.commitLocker.Unlock()
+	return ok
 }
 
 func (b *Buffer) IsTrueOfCommitMsg(digest string, falut uint) bool {

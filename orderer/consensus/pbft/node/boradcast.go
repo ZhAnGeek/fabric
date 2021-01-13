@@ -37,18 +37,19 @@ func (n *Node) Primary(content []byte, handle string) {
 }
 
 func (n *Node) GetAck(content []byte, handle string, callback func ()) {
-	ticker := time.NewTicker(time.Millisecond * 100)
+	log.Printf("[ACK] getting ack for %v", handle)
+	ticker := time.NewTicker(time.Millisecond * 5)
 	for {
 		select {
 			case <-ticker.C:
 				if resp, err := GetAck(content, n.table[n.GetPrimary()] + handle); err != nil {
 					continue
 				} else if resp.StatusCode == http.StatusOK {
+					ticker.Stop()
 					callback()
-					break
+					return
 				} else {
-					log.Printf("recognize as byzantine")
-					break
+					log.Printf("[Ack] %v", resp)
 				}
 		}
 	}

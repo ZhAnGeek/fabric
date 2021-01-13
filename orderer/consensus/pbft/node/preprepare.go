@@ -78,11 +78,10 @@ func (n *Node) prePrepareRecvAndPrepareSendThread() {
 			n.GetAck(content, server.PrepareACKEntry, func() {
 				// if prepare success, it is time to commit
 				log.Printf("[Prepare] prepare msg(%d) vote success and to send commit", msg.Sequence)
-				_, msg, err := message.NewCommitMsg(n.id, prepare)
 				if err != nil {
 					return
 				}
-				n.commitRecv <- msg
+				n.prepareRecv <- prepare
 			})
 			// view expire
 			go n.viewChangeExpire()

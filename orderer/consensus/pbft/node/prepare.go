@@ -26,6 +26,7 @@ func (n *Node) prepareRecvAndCommitSendThread() {
 					// if commit success, it is time to execute
 					n.readytoExecute(msg.Digest)
 				})
+				continue
 			}
 			if n.IsPrimary() && n.buffer.IsTrueOfPrepareMsg(msg.Digest, n.cfg.FaultNum) {
 				log.Printf("[Prepare] prepare msg(%d) vote success and to send commit", msg.Sequence)
